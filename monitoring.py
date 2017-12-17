@@ -12,7 +12,8 @@ from watchdog.events import PatternMatchingEventHandler
 logList = []
 dirList = []
 
-fileobject='./fileLog.txt'
+fileLog='./fileLog.txt'
+metaData = './metaData.txt'
 
 class LogHandler(PatternMatchingEventHandler) :
 
@@ -20,7 +21,7 @@ class LogHandler(PatternMatchingEventHandler) :
 
 	def __init__(self) :
 		super(LogHandler, self).__init__(ignore_patterns=["*/ex.log"])
-		f=open('./fileLog.txt','wr+')
+		f=open(fileLog,'wr+')
 		f.seek(0)
 		f.truncate()
 		f.close()
@@ -31,21 +32,19 @@ class LogHandler(PatternMatchingEventHandler) :
 		what = 'Directory' if event.is_directory else 'File'
 		self.eventLog = "created, " + event.src_path
 		print(dt)
-		with open('./fileLog.txt', 'a') as fout :
+		with open(fileLog, 'a') as fout :
 			fout.write(self.eventLog.split('/')[-1])
 			fout.write('\n')
 			fout.close()
-		if file_len('./fileLog.txt') > 1 :
-			with open('./fileLog.txt', 'r') as frd:
+		if file_len(fileLog) > 1 :
+			with open(fileLog, 'r') as frd:
 				toAdd = frd.readlines()
 				print(toAdd[-2])
 				ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + toAdd[-2], stderr=subprocess.STDOUT, shell=True)
-			with open('./hash.txt', 'a') as adHash:
+			with open(metaData, 'a') as adHash:
 				adHash.write('(' + ipfsAdd.split(' ')[-1].strip() + ') (' + ipfsAdd.split(' ')[-2] + ') (' + str(dt) + ')')
 				adHash.write('\n')
-
-				# and store hash into hash.txt with date.
-		elif file_len('./fileLog.txt') == 1 :
+		elif file_len(fileLog) == 1 :
 			print("oneline")
 
 		logList.append(self.eventLog)
@@ -68,7 +67,7 @@ if __name__ == '__main__' :
 	observer.start()
 	try :
 		while True :
-			time.sleep(1)ㅇㅇ
+			time.sleep(1)
 
 	except KeyboardInterrupt :
 
