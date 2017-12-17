@@ -12,7 +12,7 @@ from watchdog.events import PatternMatchingEventHandler
 logList = []
 dirList = []
 
-fileobject='./test.txt'
+fileobject='./fileLog.txt'
 
 class LogHandler(PatternMatchingEventHandler) :
 
@@ -20,7 +20,7 @@ class LogHandler(PatternMatchingEventHandler) :
 
 	def __init__(self) :
 		super(LogHandler, self).__init__(ignore_patterns=["*/ex.log"])
-		f=open('./test.txt','wr+')
+		f=open('./fileLog.txt','wr+')
 		f.seek(0)
 		f.truncate()
 		f.close()
@@ -31,12 +31,12 @@ class LogHandler(PatternMatchingEventHandler) :
 		what = 'Directory' if event.is_directory else 'File'
 		self.eventLog = "created, " + event.src_path
 		print(dt)
-		with open('./test.txt', 'a') as fout :
+		with open('./fileLog.txt', 'a') as fout :
 			fout.write(self.eventLog.split('/')[-1])
 			fout.write('\n')
 			fout.close()
-		if file_len('./test.txt') > 1 :
-			with open('./test.txt', 'r') as frd:
+		if file_len('./fileLog.txt') > 1 :
+			with open('./fileLog.txt', 'r') as frd:
 				toAdd = frd.readlines()
 				print(toAdd[-2])
 				ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + toAdd[-2], stderr=subprocess.STDOUT, shell=True)
@@ -45,7 +45,7 @@ class LogHandler(PatternMatchingEventHandler) :
 				adHash.write('\n')
 
 				# and store hash into hash.txt with date.
-		elif file_len('./test.txt') == 1 :
+		elif file_len('./fileLog.txt') == 1 :
 			print("oneline")
 
 		logList.append(self.eventLog)
@@ -68,7 +68,7 @@ if __name__ == '__main__' :
 	observer.start()
 	try :
 		while True :
-			time.sleep(1)
+			time.sleep(1)ㅇㅇ
 
 	except KeyboardInterrupt :
 
