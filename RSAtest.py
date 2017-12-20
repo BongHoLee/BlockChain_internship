@@ -16,7 +16,7 @@ if __name__=='__main__' :
     rsa_encrypt(msg.encode('utf-8'))
 """
 
-
+"""
 def createPEM() :
     private_key = RSA.generate(1024) # create private_key
     public_key = private_key.publickey()
@@ -31,23 +31,29 @@ def createPEM() :
 
 if __name__=='__main__' :
     createPEM()
-
-
 """
-def readPEM() :
+
+
+def readprivatePEM() :
     h = open('./mykey.txt', 'r')
     key = RSA.importKey(h.read())   #read private_key from mykey.txt
     h.close()
     return key
 
+def readpublicPEM() :
+    f = open('./mypukey.txt', 'r')
+    key = RSA.importKey(f.read())
+    h.close
+    return key
+
 def rsa_enc(msg) :  # encryption msg using public_key
-    private_key = readPEM()
+    private_key = readprivatePEM()
     public_key = private_key.publickey()
     encdata = public_key.encrypt(msg, 32)
     return encdata
 
 def rsa_dec(msg) :  # decryption msg using private_key
-    private_key = readPEM()
+    private_key = readprivatePEM()
     decdata = private_key.decrypt(msg)
     return decdata
 
@@ -57,4 +63,3 @@ if __name__=='__main__' :
     print(ciphered)
     deciphered = rsa_dec(ciphered)
     print(deciphered)
-"""
