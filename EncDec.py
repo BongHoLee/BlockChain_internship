@@ -7,18 +7,18 @@ from Crypto.Cipher import AES
 
 
 
-
-
+PrivateKeyPath = '/Users/leebongho/monitoring/mykey.txt'
+PublicKeyPath = '/Users/leebongho/monitoring/mypukey.txt'
 """RSA KEY def"""
 
 def readprivatePEM() :
-    h = open('./mykey.txt', 'r')
+    h = open(PrivateKeyPath, 'r')
     key = RSA.importKey(h.read())   #read private_key from mykey.txt
     h.close()
     return key
 
 def readpublicPEM() :
-    f = open('./mypukey.txt', 'r')
+    f = open(PublicKeyPath, 'r')
     key = RSA.importKey(f.read())
     h.close
     return key
@@ -73,19 +73,17 @@ def encrypt_file(key, in_filename, out_filename=None, chunksize=65536):
 
 """AES KEY def END """
 
-
+"""
 def main():
 
     key = Random.new().read(32)     #AES_key to encrypt mov
     enc_key = rsa_enc(key)          #AES_key.enc by public_key
     dec_key = rsa_dec(enc_key)      #AES_key.dec by private_key
-    print(enc_key)
-    print(dec_key)
     print binascii.hexlify(bytearray(key))
     in_filename = './test.mov'
     encrypt_file(key, in_filename, out_filename='output')   #encrypt mov with AES_KEY
     print 'Encrypte Done !'
-    #print(key)
+
     f=open('myAeskye.txt','w')      #store encrypted AES_KEY
     f.write(str(enc_key))
     f.close()
@@ -106,3 +104,4 @@ def main():
 
 
 main()
+"""

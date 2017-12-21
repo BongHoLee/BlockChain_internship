@@ -49,7 +49,7 @@ class LogHandler(PatternMatchingEventHandler) :
 		super(LogHandler, self).on_created(event)
 		what = 'Directory' if event.is_directory else 'File'
 		self.eventLog = "created, " + event.src_path
-		print(dt)
+		print(self.eventLog)
 		with open(fileLog, 'a') as fout :
 			fout.write(self.eventLog.split('/')[-1])
 			fout.write('\n')
