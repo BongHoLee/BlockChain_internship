@@ -41,15 +41,15 @@ def Camera(i) :
 """"""
 
 """"""
-def insert_db(ipfsAd) :
+def insert_db(ipfsAd,Enc_AES) :
 	filename=ipfsAd.split(' ')[-1].strip()
 	filehash=ipfsAd.split(' ')[-2]
 	dt = datetime.today().strftime('%Y-%m-%d|%H:%M:%S')
 	g=geocoder.ip('me')
 	date_ = str(dt)
 	loca_ = str(g.latlng)
-	query = 'INSERT INTO metaData(name, _hash, _date, _loca, _enc) VALUES(?, ?, ?, ?, ?)'
-	cur.execute(query, (filename, filehash, date_, loca_, 'hi'))
+	query = 'INSERT INTO metaData(_name, ipfs_hash, _date, _loca, Enc_AES) VALUES(?, ?, ?, ?, ?)'
+	cur.execute(query, (filename, filehash, date_, loca_, str(Enc_AES)))
 	conn.commit()
 """"""
 
@@ -113,27 +113,30 @@ def catch_thread(diff_cnt) :
         addedData = fout.readlines()
         toAdd = addedData[-2]
         fout.close()
-
+    dt = datetime.today().strftime('%Y-%m-%d|%H:%M:%S')
     AES_key = EncDec.Random.new().read(32)     #AES_key to encrypt mov
     enc_key = EncDec.rsa_enc(AES_key)          #AES_key.enc by public_key
     dec_key = EncDec.rsa_dec(enc_key)          #AES_key.dec by private_key
     in_filename = Camerapath + toAdd.strip()
     os.chdir(encDir)
-    EncDec.encrypt_file(AES_key, in_filename, out_filename='output')   #encrypt mov with AES_KEY
-    print 'Encrypte Done !'
+    EncDec.encrypt_file(AES_key, in_filename, out_filename=toAdd.strip())   #encrypt mov with AES_KEY
+    print('ecn!!!!')
+    time.sleep(2)
+    ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
+    insert_db(ipfsAdd, enc_key)
 
 
 
 """"""
 
 if __name__ == '__main__' :
-    #Camera_thread = threading.Thread(target=Camera, args=(0,))
-    #Camera_thread.daemon = True
+    Camera_thread = threading.Thread(target=Camera, args=(0,))
+    Camera_thread.daemon = True
     event_handler = LogHandler()
     observer = Observer()
     observer.schedule(event_handler, path='/Users/leebongho/monitoring/Camera_', recursive=True)
     observer.start()
-    #Camera_thread.start()
+    Camera_thread.start()
     time.sleep(2)
     moni()
 
