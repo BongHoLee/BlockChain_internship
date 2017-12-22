@@ -31,7 +31,7 @@ def file_len(fname):
 
 """"""
 def Camera(i) :
-    os.chdir('/Users/leebongho/monitoring/Camera_')
+    os.chdir(Camerapath)
     i=i+1
     try:
         sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -q -Q -F '+ str(i) +' -d 28800 -P 60 -t -u root kistimrc rtsp://192.168.1.54/mpeg4/media.amp', stderr=subprocess.STDOUT, shell=True)
@@ -67,7 +67,6 @@ class LogHandler(PatternMatchingEventHandler) :
 
 	def on_created(self, event):
 		super(LogHandler, self).on_created(event)
-		what = 'Directory' if event.is_directory else 'File'
 		self.eventLog = "created, " + event.src_path
 		print(self.eventLog)
 		with open(fileLog, 'a') as fout :
@@ -134,7 +133,7 @@ if __name__ == '__main__' :
     Camera_thread.daemon = True
     event_handler = LogHandler()
     observer = Observer()
-    observer.schedule(event_handler, path='/Users/leebongho/monitoring/Camera_', recursive=True)
+    observer.schedule(event_handler, path=Camerapath, recursive=True)
     observer.start()
     Camera_thread.start()
     time.sleep(2)
