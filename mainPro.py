@@ -8,6 +8,7 @@ import subprocess
 import sqlite3
 import geocoder
 import EncDec
+from queue import Queue
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
@@ -21,6 +22,8 @@ metaData = '/Users/leebongho/monitoring/metaData.txt'
 conn = sqlite3.connect('test.db', check_same_thread=False)
 cur = conn.cursor()
 
+queue = Queue()
+
 
 def file_len(fname):
     i=0
@@ -31,7 +34,7 @@ def file_len(fname):
 
 """"""
 def Camera(i) :
-    os.chdir(Camerapath)
+    os.chdir(Camera)
     i=i+1
     try:
         sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -q -Q -F '+ str(i) +' -d 28800 -P 60 -t -u root kistimrc rtsp://192.168.1.54/mpeg4/media.amp', stderr=subprocess.STDOUT, shell=True)
@@ -67,12 +70,16 @@ class LogHandler(PatternMatchingEventHandler) :
 
 	def on_created(self, event):
 		super(LogHandler, self).on_created(event)
+		what = 'Directory' if event.is_directory else 'File'
 		self.eventLog = "created, " + event.src_path
 		print(self.eventLog)
 		with open(fileLog, 'a') as fout :
 			fout.write(self.eventLog.split('/')[-1])
 			fout.write('\n')
 			fout.close()
+
+
+
 
 """"""
 
@@ -129,13 +136,13 @@ def catch_thread(diff_cnt) :
 """"""
 
 if __name__ == '__main__' :
-    Camera_thread = threading.Thread(target=Camera, args=(0,))
-    Camera_thread.daemon = True
+    #Camera_thread = threading.Thread(target=Camera, args=(0,))
+    #Camera_thread.daemon = True
     event_handler = LogHandler()
     observer = Observer()
     observer.schedule(event_handler, path=Camerapath, recursive=True)
     observer.start()
-    Camera_thread.start()
+    #Camera_thread.start()
     time.sleep(2)
     moni()
 
