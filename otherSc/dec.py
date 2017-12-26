@@ -9,18 +9,19 @@ import sqlite3
 
 conn = sqlite3.connect('test.db', check_same_thread=False)
 cur = conn.cursor()
-
+private_key = '/Users/leebongho/monitoring/keyDir/mykey.txt'
+public_key = '/Users/leebongho/monitoring/keyDir/mypukye.txt'
 
 """RSA KEY def"""
 
 def readprivatePEM() :
-    h = open('./mykey.txt', 'r')
+    h = open(private_key, 'r')
     key = RSA.importKey(h.read())   #read private_key from mykey.txt
     h.close()
     return key
 
 def readpublicPEM() :
-    f = open('./mypukey.txt', 'r')
+    f = open(public_key, 'r')
     key = RSA.importKey(f.read())
     h.close
     return key
@@ -77,13 +78,13 @@ def encrypt_file(key, in_filename, out_filename=None, chunksize=65536):
 
 
 def main():
-    cur.execute('SELECT Enc_AES FROM metaData WHERE _id=1')
+    cur.execute('SELECT Enc_AES FROM metaData WHERE _id=39')
     row = cur.fetchone()
     print(row)
     key=eval(row[-1])
     print(key)
     dec_key=rsa_dec(key)
-    decrypt_file(dec_key, in_filename='./encCamera_/ttt', out_filename='./encCamera_/ttt.mov')
+    decrypt_file(dec_key, in_filename='ttt', out_filename='ttt.mov')
 
 
 

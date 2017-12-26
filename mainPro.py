@@ -25,14 +25,14 @@ queue = Queue()
 
 
 """"""
-def Camera() :
+def Camera(i) :
     os.chdir(Camerapath)
     i=i+1
     try:
         sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -q -Q -F '+ str(i) +' -d 28800 -P 60 -t -u root kistimrc rtsp://192.168.1.54/mpeg4/media.amp', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
-        Camera()
+        Camera(i)
 """"""
 
 """"""
@@ -86,11 +86,14 @@ def upload_thread() :
             insert_db(ipfsAdd, enc_key)
             queue.task_done()
             print('task_done')
+            time.sleep(2)
+            os.remove(Camerapath + toAdd)
+            os.remove(encDir + toAdd)
 
 """"""
 
 if __name__ == '__main__' :
-    Camera_thread = threading.Thread(target=Camera)
+    Camera_thread = threading.Thread(target=Camera, args=(0,))
     Camera_thread.daemon = True
     event_handler = LogHandler()
     observer = Observer()
