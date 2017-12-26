@@ -1,3 +1,6 @@
+
+#-*- coding: utf-8 -*-
+
 import threading
 import os
 import sys
@@ -21,3 +24,4 @@ print(queue.queue)
 print(queue.get())
 print(queue.get())
 print(queue.get())
+#야호
