@@ -32,7 +32,7 @@ def Camera() :
         sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -q -Q -F '+ str(i) +' -d 28800 -P 60 -t -u root kistimrc rtsp://192.168.1.54/mpeg4/media.amp', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
-        Camera(i)
+        Camera()
 """"""
 
 """"""
