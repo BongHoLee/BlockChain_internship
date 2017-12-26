@@ -70,7 +70,11 @@ class LogHandler(PatternMatchingEventHandler) :
 def upload_thread() :
 
     while True:
-        if queue.qsize() > 1:
+        check = queue.queue[0]
+        temp = os.path.getsize(Camerapath + check)
+        time.sleep(5)
+        checkSize = Camerapath + check
+        if os.path.getsize(checkSize) == temp :
             toAdd = queue.get()
             print(toAdd)
             dt = datetime.today().strftime('%Y-%m-%d|%H:%M:%S')
@@ -80,13 +84,13 @@ def upload_thread() :
             in_filename = Camerapath + toAdd.strip()
             os.chdir(encDir)
             EncDec.encrypt_file(AES_key, in_filename, out_filename=toAdd.strip())   #encrypt mov with AES_KEY
-            print('ecn!!!!')
+            print('enc!!!!')
             time.sleep(2)
             ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
             insert_db(ipfsAdd, enc_key)
             queue.task_done()
             print('task_done')
-            time.sleep(2)
+            time.sleep(5)
             #os.remove(Camerapath + toAdd)
             #os.remove(encDir + toAdd)
 

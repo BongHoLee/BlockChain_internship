@@ -1,12 +1,23 @@
 import threading
+import os
+import sys
+from datetime import datetime
+import time
+import logging
+import subprocess
+import sqlite3
+import geocoder
+import EncDec
+from queue import Queue
+from watchdog.observers import Observer
+from watchdog.events import PatternMatchingEventHandler
 
-sleep = True
-def thread_func() :
-    while not sleep :
-        print('hi')
+queue = Queue()
 
-
-if __name__=='__main__' :
-    ab = threading.Thread(target=thread_func)
-    ab.start()
-    
+queue.put(1)
+queue.put(2)
+queue.put(3)
+print(queue.queue)
+print(queue.get())
+print(queue.get())
+print(queue.get())

@@ -78,7 +78,7 @@ def encrypt_file(key, in_filename, out_filename=None, chunksize=65536):
 
 
 def main():
-    cur.execute('SELECT Enc_AES FROM metaData WHERE _id=39')
+    cur.execute('SELECT Enc_AES FROM metaData WHERE _id=220')
     row = cur.fetchone()
     print(row)
     key=eval(row[-1])
