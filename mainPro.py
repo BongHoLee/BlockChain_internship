@@ -87,8 +87,8 @@ def upload_thread() :
             queue.task_done()
             print('task_done')
             time.sleep(2)
-            os.remove(Camerapath + toAdd)
-            os.remove(encDir + toAdd)
+            #os.remove(Camerapath + toAdd)
+            #os.remove(encDir + toAdd)
 
 """"""
 
