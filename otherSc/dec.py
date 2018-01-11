@@ -78,13 +78,13 @@ def encrypt_file(key, in_filename, out_filename=None, chunksize=65536):
 
 
 def main():
-    cur.execute('SELECT Enc_AES FROM metaData WHERE _id=220')
+    cur.execute('SELECT Enc_AES FROM metaData WHERE _id=227')
     row = cur.fetchone()
     print(row)
     key=eval(row[-1])
     print(key)
     dec_key=rsa_dec(key)
-    decrypt_file(dec_key, in_filename='ttt', out_filename='ttt.mov')
+    decrypt_file(dec_key, in_filename='ttt', out_filename='ttt1')
 
 
 

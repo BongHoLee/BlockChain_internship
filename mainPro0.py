@@ -9,6 +9,8 @@ import subprocess
 import sqlite3
 import geocoder
 import EncDec
+from web3 import Web3, HTTPProvider, IPCProvider
+from solc import compile_files
 from queue import Queue
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
@@ -23,6 +25,20 @@ metaData = '/Users/leebongho/monitoring2/metaData.txt'
 conn = sqlite3.connect('test.db', check_same_thread=False)          #sqlite3 데이터베이스 연결
 cur = conn.cursor()                                                 #데이터베이스 커서 지정
 queue = Queue()                                                     #이후 queue에 영상 데이터를 저장하기 위함.
+queue2 = Queue()                                                    #데이터베이스의 마지막 튜플을 queue2에 저장하기 위함
+
+
+w3 = Web3(IPCProvider("/Users/leebongho/Library/Ethereum/testnet/geth.ipc"))
+w3.personal.unlockAccount(w3.eth.accounts[0], "rhkdhl5081", 0)
+
+#compile
+compiled_sol = compile_files(['contract.sol','metaData'])
+contract_interface = compiled_sol['{}:{}'.format('contract.sol','metaData')]
+
+
+contract = w3.eth.contract(abi=contract_interface['abi'],
+                           bytecode=contract_interface['bin'],
+                           bytecode_runtime=contract_interface['bin-runtime'])
 
 
 """openRTSP 프로그램 구동 스레드 메소드"""
@@ -30,23 +46,28 @@ def Camera(i) :
     os.chdir(Camerapath)    #Camera_ 디렉토리에서 해당 프로그램 실행을 위한 경로 설정
     i=i+1                   #프로세스가 원치않게 종료후 다시 실행되었을 때 영상 파일 이름을 명시하기 위한 변수
     try:
-        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -4 -Q -F ' + str(i) + ' -d 28800 -P 60 -t rtsp://192.168.1.59:8554/unicast', stderr=subprocess.STDOUT, shell=True)
+        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -q -Q -F '+ str(i) +' -d 28800 -P 60 -t -u root kistimrc rtsp://192.168.1.54/mpeg4/media.amp', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
         Camera(i)                   #원치않게 스레드가 종료되었을 때 다시 실행하기 위해서 재귀 호출
 """----------------------------"""
 
 """데이터베이스에 INSERT 하기위한 메소드"""
-def insert_db(ipfsAd,Enc_AES) :
-	filename=ipfsAd.decode().split(' ')[-1].strip()         #영상 파일 이름을 저장하기 위한 변수, 공백 제거 처리
-	filehash=ipfsAd.decode().split(' ')[-2]                 #영상 파일의 IPFS hash를 저장하기 위한 변수
+def thread_db(ipfsAd,Enc_AES) :
+	filename=ipfsAd.split(' ')[-1].strip()         #영상 파일 이름을 저장하기 위한 변수, 공백 제거 처리
+	filehash=ipfsAd.split(' ')[-2]                 #영상 파일의 IPFS hash를 저장하기 위한 변수
 	dt = datetime.today().strftime('%Y-%m-%d|%H:%M:%S')    #영상 파일이 데이터베이스에 INSERT되는 시점을 명시
 	g=geocoder.ip('me')                                    #현재 IP의 위치(IP camera의 위치를 대략적으로 표시하기 위함)
 	date_ = str(dt)                                        #DB에 삽입하기 위해 string 형으로 변환
 	loca_ = str(g.latlng)                                  #마찬가지
 	query = 'INSERT INTO metaData(_name, ipfs_hash, _date, _loca, Enc_AES) VALUES(?, ?, ?, ?, ?)'
 	cur.execute(query, (filename, filehash, date_, loca_, str(Enc_AES)))
-	conn.commit()
+    conn.commit()
+    sql = "SELECT * FROM metaData ORDER BY _id DESC LIMIT 1;"
+    cur.execute(sql)
+    inqueue = cur.fetchone()
+    queue2.put(str(inqueue))
+
 """"""
 
 class LogHandler(PatternMatchingEventHandler) :        #모니터링 프로그램의 클래스
@@ -88,13 +109,38 @@ def upload_thread() :                           #주요 작업을 처리하는 �
             print('enc!!!!')
             time.sleep(2)                               #2초간 정지 후 암호화된 영상 파일을 ipfs add
             ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
-            insert_db(ipfsAdd, enc_key)                 #ipfs의 hash와 암호화된 AES_key를 인자로 넘겨서 DB INSERT 함수 호출
+            thread_db(ipfsAdd, enc_key)                 #ipfs의 hash와 암호화된 AES_key를 인자로 넘겨서 DB INSERT 함수 호출
             queue.task_done()                           #queue작업이 수행되었음을 알림.
             print('task_done')
             #os.remove(Camerapath + toAdd)              #업로드 수행 이후 영상 파일 제거
             #os.remove(encDir + toAdd)                  #업로드 수행 이후 암호화된 영상 파일 제거
 
 """"""
+
+
+def deploy() :
+    while True :
+        setData = queue2.get()
+        tx_receipt = w3.eth.getTransactionReceipt('0x2576c2afabec2871b36655405113a94d88dd7dd5c5bfc2d1b69eb22a4433c215')
+        contract_address = tx_receipt['contractAddress']
+        contract_instance = contract(contract_address)
+        # Get
+        print('Contract value: {}'.format(contract_instance.call().getDBdata()))
+        hi = format(contract_instance.call().getDBdata())
+        print(hi)
+        # Set
+        contract_instance.transact({"from": w3.eth.accounts[0]}).setDBdata(str(setData))
+        print('Setting value to: LeebongHo')
+
+        # Mining
+        #w3.miner.start(2)
+        time.sleep(60)
+        #w3.miner.stop()
+
+        # Get
+        print('Contract value: {}'.format(contract_instance.call().getDBdata()))
+
+
 
 if __name__ == '__main__' :
     Camera_thread = threading.Thread(target=Camera, args=(0,))

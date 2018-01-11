@@ -57,7 +57,7 @@ def decrypt_file(key, in_filename, out_filename, chunksize=24 * 1024):
 def encrypt_file(key, in_filename, out_filename=None, chunksize=65536):
     if not out_filename:
         out_filename = in_filename + '.enc'
-    iv = 'initialvector123'
+    iv = b'initialvector123'
     encryptor = AES.new(key, AES.MODE_CBC, iv)
     filesize = os.path.getsize(in_filename)
     with open(in_filename, 'rb') as infile:
@@ -69,7 +69,7 @@ def encrypt_file(key, in_filename, out_filename=None, chunksize=65536):
                 if len(chunk) == 0:
                     break
                 elif len(chunk) % 16 != 0:
-                    chunk += ' ' * (16 - len(chunk) % 16)
+                    chunk += b' ' * (16 - len(chunk) % 16)
                 outfile.write(encryptor.encrypt(chunk))
 
 """AES KEY def END """
