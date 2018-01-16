@@ -17,11 +17,11 @@ from watchdog.events import PatternMatchingEventHandler
 
 
 
-Camerapath = '/Users/leebongho/monitoring2/Camera_/'                 #Camera_ 디렉토리 경로
-fileLog='/Users/leebongho/monitoring2/fileLog.txt'
-encfileLog = '/Users/leebongho/monitoring2/encfileLog.txt'
-encDir = '/Users/leebongho/monitoring2/encCamera_/'                  #encCamera_ 디렉토리 경로
-metaData = '/Users/leebongho/monitoring2/metaData.txt'
+Camerapath = '/Users/leebongho/monitoring/Camera_/'                 #Camera_ 디렉토리 경로
+fileLog='/Users/leebongho/monitoring/fileLog.txt'
+encfileLog = '/Users/leebongho/monitoring/encfileLog.txt'
+encDir = '/Users/leebongho/monitoring/encCamera_/'                  #encCamera_ 디렉토리 경로
+metaData = '/Users/leebongho/monitoring/metaData.txt'
 conn = sqlite3.connect('test.db', check_same_thread=False)          #sqlite3 데이터베이스 연결
 cur = conn.cursor()                                                 #데이터베이스 커서 지정
 queue = Queue()                                                     #이후 queue에 영상 데이터를 저장하기 위함.
@@ -44,7 +44,7 @@ def Camera(i) :
     os.chdir(Camerapath)    #Camera_ 디렉토리에서 해당 프로그램 실행을 위한 경로 설정
     i=i+1                   #프로세스가 원치않게 종료후 다시 실행되었을 때 영상 파일 이름을 명시하기 위한 변수
     try:
-        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -i -Q -F ' + str(i) + ' -d 28800 -P 60 rtsp://192.168.1.59:8554/unicast', stderr=subprocess.STDOUT, shell=True)
+        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -q -Q -F '+ str(i) +' -d 28800 -P 60 -u root kistimrc rtsp://192.168.1.54/mpeg4/media.amp', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
         Camera(i)                   #원치않게 스레드가 종료되었을 때 다시 실행하기 위해서 재귀 호출

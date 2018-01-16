@@ -15,11 +15,11 @@ from watchdog.events import PatternMatchingEventHandler
 
 
 
-Camerapath = '/Users/leebongho/monitoring2/Camera_/'                 #Camera_ 디렉토리 경로
-fileLog='/Users/leebongho/monitoring2/fileLog.txt'
-encfileLog = '/Users/leebongho/monitoring2/encfileLog.txt'
-encDir = '/Users/leebongho/monitoring2/encCamera_/'                  #encCamera_ 디렉토리 경로
-metaData = '/Users/leebongho/monitoring2/metaData.txt'
+Camerapath = '/Users/leebongho/monitoring/Camera_/'                 #Camera_ 디렉토리 경로
+fileLog='/Users/leebongho/monitoring/fileLog.txt'
+encfileLog = '/Users/leebongho/monitoring/encfileLog.txt'
+encDir = '/Users/leebongho/monitoring/encCamera_/'                  #encCamera_ 디렉토리 경로
+metaData = '/Users/leebongho/monitoring/metaData.txt'
 conn = sqlite3.connect('test.db', check_same_thread=False)          #sqlite3 데이터베이스 연결
 cur = conn.cursor()                                                 #데이터베이스 커서 지정
 queue = Queue()                                                     #이후 queue에 영상 데이터를 저장하기 위함.
