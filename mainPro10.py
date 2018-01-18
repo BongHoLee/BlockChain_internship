@@ -26,7 +26,7 @@ conn = sqlite3.connect('test.db', check_same_thread=False)          #sqlite3 데
 cur = conn.cursor()                                                 #데이터베이스 커서 지정
 queue = Queue()                                                     #이후 queue에 영상 데이터를 저장하기 위함.
 queue2 = Queue()
-
+'''
 w3 = Web3(IPCProvider("/home/pi/Library/Ethereum/testnet/geth.ipc"))
 w3.personal.unlockAccount(w3.eth.accounts[4], "gksmf5081", 0)
 
@@ -35,16 +35,14 @@ compiled_sol = compile_files(['user0.sol','UserCrud'])
 contract_interface = compiled_sol['{}:{}'.format('user0.sol','UserCrud')]
 
 
-contract = w3.eth.contract(abi=contract_interface['abi'],
-                           bytecode=contract_interface['bin'],
-                           bytecode_runtime=contract_interface['bin-runtime'])
+contract = w3.eth.contract(abi=[{'constant': False, 'inputs': [{'name': '_dbData', 'type': 'string'}], 'name': 'insertData', 'outputs': [], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'getIndex', 'outputs': [{'name': 'count', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [{'name': 'id', 'type': 'uint256'}], 'name': 'getUser', 'outputs': [{'name': 'dbData', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}])'''
 
 """openRTSP 프로그램 구동 스레드 메소드"""
 def Camera(i) :
     os.chdir(Camerapath)    #Camera_ 디렉토리에서 해당 프로그램 실행을 위한 경로 설정
     i=i+1                   #프로세스가 원치않게 종료후 다시 실행되었을 때 영상 파일 이름을 명시하기 위한 변수
     try:
-        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -q -Q -F '+ str(i) +' -d 28800 -P 60 -u root kistimrc rtsp://192.168.1.31/mpeg4/media.amp', stderr=subprocess.STDOUT, shell=True)
+        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -i -Q -F ' + str(i) + ' -d 28800 -P 50 rtsp://192.168.1.8:8554/unicast', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
         Camera(i)                   #원치않게 스레드가 종료되었을 때 다시 실행하기 위해서 재귀 호출
@@ -142,7 +140,7 @@ def deploy() :
 if __name__ == '__main__' :
     Camera_thread = threading.Thread(target=Camera, args=(0,))
     Camera_thread.daemon = True
-    deplpy_thread = threading.Thread(target = deploy)
+    #deplpy_thread = threading.Thread(target = deploy)
     event_handler = LogHandler()
     observer = Observer()
     observer.schedule(event_handler, path=Camerapath, recursive=True)
@@ -151,7 +149,7 @@ if __name__ == '__main__' :
     time.sleep(2)
     upload = threading.Thread(target = upload_thread)
     upload.start()
-    deplpy_thread.start()
+    #deplpy_thread.start()
 
 
     try :
