@@ -17,17 +17,17 @@ from watchdog.events import PatternMatchingEventHandler
 
 
 
-Camerapath = '/Users/leebongho/monitoring/Camera_/'                 #Camera_ 디렉토리 경로
-fileLog='/Users/leebongho/monitoring/fileLog.txt'
-encfileLog = '/Users/leebongho/monitoring/encfileLog.txt'
-encDir = '/Users/leebongho/monitoring/encCamera_/'                  #encCamera_ 디렉토리 경로
-metaData = '/Users/leebongho/monitoring/metaData.txt'
+Camerapath = '/home/pi/monitoring/Camera_/'                 #Camera_ 디렉토리 경로
+fileLog='/home/pi/monitoring/fileLog.txt'
+encfileLog = '/home/pi/monitoring/encfileLog.txt'
+encDir = '/home/pi/monitoring/encCamera_/'                  #encCamera_ 디렉토리 경로
+metaData = '/home/pi/monitoring/metaData.txt'
 conn = sqlite3.connect('test.db', check_same_thread=False)          #sqlite3 데이터베이스 연결
 cur = conn.cursor()                                                 #데이터베이스 커서 지정
 queue = Queue()                                                     #이후 queue에 영상 데이터를 저장하기 위함.
 queue2 = Queue()
 
-w3 = Web3(IPCProvider("/Users/leebongho/Library/Ethereum/testnet/geth.ipc"))
+w3 = Web3(IPCProvider("/home/pi/Library/Ethereum/testnet/geth.ipc"))
 w3.personal.unlockAccount(w3.eth.accounts[4], "gksmf5081", 0)
 
 #compile
