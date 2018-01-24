@@ -17,32 +17,32 @@ from watchdog.events import PatternMatchingEventHandler
 
 
 
-Camerapath = '/home/pi/monitoring/Camera_/'                 #Camera_ 디렉토리 경로
-fileLog='/home/pi/monitoring/fileLog.txt'
-encfileLog = '/home/pi/monitoring/encfileLog.txt'
-encDir = '/home/pi/monitoring/encCamera_/'                  #encCamera_ 디렉토리 경로
-metaData = '/home/pi/monitoring/metaData.txt'
+Camerapath = '/Users/leebongho/monitoring/Camera_/'                 #Camera_ 디렉토리 경로
+fileLog='/Users/leebongho/monitoring/fileLog.txt'
+encfileLog = '/Users/leebongho/monitoring/encfileLog.txt'
+encDir = '/Users/leebongho/monitoring/encCamera_/'                  #encCamera_ 디렉토리 경로
+metaData = '/Users/leebongho/monitoring/metaData.txt'
 conn = sqlite3.connect('test.db', check_same_thread=False)          #sqlite3 데이터베이스 연결
 cur = conn.cursor()                                                 #데이터베이스 커서 지정
 queue = Queue()                                                     #이후 queue에 영상 데이터를 저장하기 위함.
 queue2 = Queue()
-'''
-w3 = Web3(IPCProvider("/home/pi/Library/Ethereum/testnet/geth.ipc"))
-w3.personal.unlockAccount(w3.eth.accounts[4], "gksmf5081", 0)
+
+w3 = Web3(IPCProvider("/Users/leebongho/Library/Ethereum/testnet/geth.ipc"))
+#w3.personal.unlockAccount(w3.eth.accounts[4], "gksmf5081", 0)
 
 #compile
-compiled_sol = compile_files(['user0.sol','UserCrud'])
-contract_interface = compiled_sol['{}:{}'.format('user0.sol','UserCrud')]
+#compiled_sol = compile_files(['user0.sol','UserCrud'])
+#contract_interface = compiled_sol['{}:{}'.format('user0.sol','UserCrud')]
 
 
-contract = w3.eth.contract(abi=[{'constant': False, 'inputs': [{'name': '_dbData', 'type': 'string'}], 'name': 'insertData', 'outputs': [], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'getIndex', 'outputs': [{'name': 'count', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [{'name': 'id', 'type': 'uint256'}], 'name': 'getUser', 'outputs': [{'name': 'dbData', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}])'''
+contract = w3.eth.contract(abi=[{'constant': False, 'inputs': [{'name': '_dbData', 'type': 'string'}], 'name': 'insertData', 'outputs': [], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'getIndex', 'outputs': [{'name': 'count', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [{'name': 'id', 'type': 'uint256'}], 'name': 'getUser', 'outputs': [{'name': 'dbData', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}])
 
 """openRTSP 프로그램 구동 스레드 메소드"""
 def Camera(i) :
     os.chdir(Camerapath)    #Camera_ 디렉토리에서 해당 프로그램 실행을 위한 경로 설정
     i=i+1                   #프로세스가 원치않게 종료후 다시 실행되었을 때 영상 파일 이름을 명시하기 위한 변수
     try:
-        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -i -Q -F ' + str(i) + ' -d 28800 -P 50 rtsp://192.168.1.8:8554/unicast', stderr=subprocess.STDOUT, shell=True)
+        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -i -Q -F ' + str(i) + ' -d 28800 -P 50 rtsp://192.168.1.18:8554/unicast', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
         Camera(i)                   #원치않게 스레드가 종료되었을 때 다시 실행하기 위해서 재귀 호출
@@ -117,7 +117,7 @@ def deploy() :
     while True :
         i = 0
         setData = queue2.get()
-        tx_receipt = w3.eth.getTransactionReceipt('0xc9856c591bf46ebc96e1e8346085f3874544e6e1626cd0543d7c31a9f3b697b3')
+        tx_receipt = w3.eth.getTransactionReceipt('0x6857f2bd85cea3cf5a0a84b80e1bea44d2fc660f5ba07a47e7d6808eab78aae9')
         contract_address = tx_receipt['contractAddress']
         contract_instance = contract(contract_address)
         # Set
@@ -140,7 +140,7 @@ def deploy() :
 if __name__ == '__main__' :
     Camera_thread = threading.Thread(target=Camera, args=(0,))
     Camera_thread.daemon = True
-    #deplpy_thread = threading.Thread(target = deploy)
+    deplpy_thread = threading.Thread(target = deploy)
     event_handler = LogHandler()
     observer = Observer()
     observer.schedule(event_handler, path=Camerapath, recursive=True)
@@ -149,7 +149,7 @@ if __name__ == '__main__' :
     time.sleep(2)
     upload = threading.Thread(target = upload_thread)
     upload.start()
-    #deplpy_thread.start()
+    deplpy_thread.start()
 
 
     try :

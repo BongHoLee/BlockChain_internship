@@ -8,8 +8,8 @@ from Crypto.Cipher import AES
 
 
 
-PrivateKeyPath = '/home/pi/monitoring/keyDir/mykey.txt'
-PublicKeyPath = '/home/pi/monitoring/keyDir/mypukey.txt'
+PrivateKeyPath = '/Users/leebongho/monitoring/keyDir/mykey.txt'
+PublicKeyPath = '/Users/leebongho/monitoring/keyDir/mypukey.txt'
 """RSA KEY def"""
 
 def readprivatePEM() :
