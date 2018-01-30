@@ -26,26 +26,83 @@ conn = sqlite3.connect('test.db', check_same_thread=False)          #sqlite3 데
 cur = conn.cursor()                                                 #데이터베이스 커서 지정
 queue = Queue()                                                     #이후 queue에 영상 데이터를 저장하기 위함.
 queue2 = Queue()
+now = datetime.now()
 
-#w3 = Web3(HTTPProvider('https://ropsten.infura.io/'))
-w3 = Web3(IPCProvider("/Users/leebongho/Library/Ethereum/testnet/geth.ipc"))
-w3.personal.unlockAccount('0x053B71f58117A07aD1B9b76De2F73DfaD97822fC', "gksmf5081", 0)
+dic = {}
+emptyDir = 'QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn'
+dic['rootDir'] = 'Qmaye41t4c4APWSTHtW6c7fyGSrDdnR9svWSHtEdeVmNAn'
+dic['rootDir/2018'] = 'QmXQN1UgFt24KT17rm3GV2RXkae4fG8hC7kTP2EmasCLMT'
+dic['rootDir/2018/1'] = 'QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn'
 
+#w3 = Web3(IPCProvider("/Users/leebongho/Library/Ethereum/testnet/geth.ipc"))
+#w3.personal.unlockAccount(w3.eth.accounts[4], "gksmf5081", 0)
+rpc_url = "http://192.168.1.2:8545"
+w3 = Web3(HTTPProvider(rpc_url))
 #compile
-compiled_sol = compile_files(['user0.sol','UserCrud'])
-contract_interface = compiled_sol['{}:{}'.format('user0.sol','UserCrud')]
+#compiled_sol = compile_files(['user0.sol','UserCrud'])
+#contract_interface = compiled_sol['{}:{}'.format('user0.sol','UserCrud')]
 
 
-contract = w3.eth.contract(abi=contract_interface['abi'],
-                           bytecode=contract_interface['bin'],
-                           bytecode_runtime=contract_interface['bin-runtime'])
+contract = w3.eth.contract(abi=[{'constant': False, 'inputs': [{'name': '_dbData', 'type': 'string'}], 'name': 'insertData', 'outputs': [], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'getIndex', 'outputs': [{'name': 'count', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [{'name': 'id', 'type': 'uint256'}], 'name': 'getUser', 'outputs': [{'name': 'dbData', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}])
+
+#년월 같음
+def dirUpdate1(temp_year, temp_month, ipfsAd) :
+    clip_name=ipfsAd.decode().split(' ')[-1].strip()
+    clip_hash=ipfsAd.decode().split(' ')[-2]
+    month_hash = dic['rootDir/'+str(temp_year)+'/'+str(temp_month)]
+    year_hash = dic['rootDir/'+str(temp_year)]
+    root_hash = dic['rootDir']
+    up_m = subprocess.check_output('/usr/local/bin/ipfs object patch '+ month_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    dic['rootDir/'+str(temp_year)+'/'+str(temp_month)] = up_m
+    up_y = subprocess.check_output('/usr/local/bin/ipfs object patch '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    dic['rootDir/'+str(temp_year)] = up_y
+    up_r = subprocess.check_output('/usr/local/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    dic['rootDir'] = up_r
+    print(up_r)
+    return up_r
+
+#년 같고 월 다름
+def dirUpdate2(temp_year, temp_month, ipfsAd) :
+    clip_name=ipfsAd.decode().split(' ')[-1].strip()
+    clip_hash=ipfsAd.decode().split(' ')[-2]
+    dic['rootDir/'+str(temp_year)+'/'+str(temp_month)] = emptyDir # 새로운 월 생성
+    month_hash = dic['rootDir/'+str(temp_year)+'/'+str(temp_month)]
+    year_hash = dic['rootDir/'+str(temp_year)]
+    root_hash = dic['rootDir']
+    up_m = subprocess.check_output('/usr/local/bin/ipfs object patch '+ month_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    dic['rootDir/'+str(temp_year)+'/'+str(temp_month)] = up_m
+    up_y = subprocess.check_output('/usr/local/bin/ipfs object patch '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    dic['rootDir/'+str(temp_year)] = up_y
+    up_r = subprocess.check_output('/usr/local/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    dic['rootDir'] = up_r
+    print(up_r)
+    return up_r
+#년도 다름
+def dirUpdate3(temp_year, temp_month, ipfsAd) :
+    clip_name=ipfsAd.decode().split(' ')[-1].strip()
+    clip_hash=ipfsAd.decode().split(' ')[-2]
+    dic['rootDir/'+str(temp_year)] = emptyDir # 새로운 년도 생성
+    dic['rootDir/'+str(temp_year)+'/'+str(temp_month)] = emptyDir #새로운 월 생성
+    month_hash = dic['rootDir/'+str(temp_year)+'/'+str(temp_month)]
+    year_hash = dic['rootDir/'+str(temp_year)]
+    root_hash = dic['rootDir']
+    up_m = subprocess.check_output('/usr/local/bin/ipfs object patch '+ month_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    dic['rootDir/'+str(temp_year)+'/'+str(temp_month)] = up_m
+    up_y = subprocess.check_output('/usr/local/bin/ipfs object patch '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    dic['rootDir/'+str(temp_year)] = up_y
+    up_r = subprocess.check_output('/usr/local/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    dic['rootDir'] = up_r
+    print(up_r)
+    return up_r
+
+
 
 """openRTSP 프로그램 구동 스레드 메소드"""
 def Camera(i) :
     os.chdir(Camerapath)    #Camera_ 디렉토리에서 해당 프로그램 실행을 위한 경로 설정
     i=i+1                   #프로세스가 원치않게 종료후 다시 실행되었을 때 영상 파일 이름을 명시하기 위한 변수
     try:
-        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -i -Q -F ' + str(i) + ' -d 28800 -P 50 rtsp://192.168.1.18:8554/unicast', stderr=subprocess.STDOUT, shell=True)
+        sub = subprocess.check_output('openRTSP -D 1 -c -B 10000000 -b 10000000 -q -Q -F CAM'+ str(i) +' -d 28800 -P 60 -t -u admin admin rtsp://192.168.1.26/11', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
         Camera(i)                   #원치않게 스레드가 종료되었을 때 다시 실행하기 위해서 재귀 호출
@@ -88,10 +145,11 @@ class LogHandler(PatternMatchingEventHandler) :        #모니터링 프로그�
         queue.put(self.eventLog.split('/')[-1])     #중요함. 캐치한 이벤트 (생성된 파일)의 이름을 queue에 삽입
 
 """"""
-def upload_thread() :
+def upload_thread(temp_year, temp_month) :
     time.sleep(5)                           #주요 작업을 처리하는 업로드 스레드
 
     while True:                                 #무한 반복
+        now = datetime.now()
         check = queue.queue[0]                  #queue에 삽입된 영상 파일의 이름을 저장하는 변수
         temp = os.path.getsize(Camerapath + check)  #파일의 size를 이용해서 영상이 다 받아졌는지 확인하기 위한 size 체크
         time.sleep(5)                               #파일의 size가 5초가 지나도 그대로이면 파일이 다 받아진것으로 판단하고 업로드 작업 수행
@@ -109,22 +167,33 @@ def upload_thread() :
             print('enc!!!!')
             time.sleep(2)                               #2초간 정지 후 암호화된 영상 파일을 ipfs add
             ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
+            if now.minute == temp_year :
+                if now.month == temp_month :
+                    root_hash = dirUpdate1(now.year, now.month, ipfsAdd)
+                elif now.month != temp_month :
+                    temp_month += 1
+                    root_hash = dirUpdate2(now.year, now.minute, ipfsAdd)
+            elif now.minute != temp_year and now.month == 1 :
+                temp_year += 1
+                temp_month = 1
+                root_hash = dirUpdate3(now.minute, now.month, ipfsAdd)
             insert_db(ipfsAdd, enc_key)                 #ipfs의 hash와 암호화된 AES_key를 인자로 넘겨서 DB thread 함수 호출
             queue.task_done()                           #queue작업이 수행되었음을 알림.
             print('task_done')
             #os.remove(Camerapath + toAdd)              #업로드 수행 이후 영상 파일 제거
             #os.remove(encDir + toAdd)                  #업로드 수행 이후 암호화된 영상 파일 제거
 
+
 """"""
 def deploy() :
     while True :
         i = 0
         setData = queue2.get()
-        tx_receipt = w3.eth.getTransactionReceipt('0xc9856c591bf46ebc96e1e8346085f3874544e6e1626cd0543d7c31a9f3b697b3')
+        tx_receipt = w3.eth.getTransactionReceipt('0x6857f2bd85cea3cf5a0a84b80e1bea44d2fc660f5ba07a47e7d6808eab78aae9')
         contract_address = tx_receipt['contractAddress']
         contract_instance = contract(contract_address)
         # Set
-        tx = contract_instance.transact({"from": '0x053B71f58117A07aD1B9b76De2F73DfaD97822fC',"gas": 500000}).insertData(str(setData))
+        tx = contract_instance.transact({"from": w3.eth.accounts[4],"gas": 500000}).insertData(str(setData))
         print('smart contract value inserted value : {} '.format(setData))
         while w3.eth.getTransactionReceipt(tx) is None :
             time.sleep(3)
@@ -143,16 +212,16 @@ def deploy() :
 if __name__ == '__main__' :
     Camera_thread = threading.Thread(target=Camera, args=(0,))
     Camera_thread.daemon = True
-    deplpy_thread = threading.Thread(target = deploy)
+    #deplpy_thread = threading.Thread(target = deploy)
     event_handler = LogHandler()
     observer = Observer()
     observer.schedule(event_handler, path=Camerapath, recursive=True)
     observer.start()
     Camera_thread.start()
     time.sleep(2)
-    upload = threading.Thread(target = upload_thread)
+    upload = threading.Thread(target = upload_thread, args=(now.year, now.month))
     upload.start()
-    deplpy_thread.start()
+    #deplpy_thread.start()
 
 
     try :
