@@ -45,3 +45,5 @@ sql = 'SELECT * FROM Camera1'
 cur.execute(sql)
 get = cur.fetchall()
 print(get)
+
+print('year : {}, month : {}'.format(year,month))
