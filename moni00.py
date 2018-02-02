@@ -174,7 +174,7 @@ def deploy() :              #스마트컨트랙트에 메타데이터를 저장�
     while True :
         i = 0
         setData = queue2.get()      #queue2에 저장된 데이터(데이터베이스에서 추출한 마지막 열의 메타데이터)를 setData에 저장
-        tx_receipt = w3.eth.getTransactionReceipt('0x6857f2bd85cea3cf5a0a84b80e1bea44d2fc660f5ba07a47e7d6808eab78aae9') #스마트 컨트랙트의 주소를 추출하기 위해 트랜잭션의 주소를 가져옴
+        tx_receipt = w3.eth.getTransactionReceipt('0x05fa22d40cd95bdf0fc0ac4747b7e02c5714883b1a769f8e8099c01b0da8791a') #스마트 컨트랙트의 주소를 추출하기 위해 트랜잭션의 주소를 가져옴
         contract_address = tx_receipt['contractAddress']
         contract_instance = contract(contract_address)#컨트랙트 주소를 이용해서 컨트랙트 인스턴스 생성
         # Set
@@ -206,7 +206,7 @@ if __name__ == '__main__' :
     Camera2_thread.start()
     Camera3_thread.start()
     time.sleep(3)
-    upload = threading.Thread(target = upload_thread, args=(now.year, 1))
+    upload = threading.Thread(target = upload_thread, args=(now.year, now.month))
     upload.start()
     deplpy_thread.start()
 
