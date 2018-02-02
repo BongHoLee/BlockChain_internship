@@ -26,10 +26,15 @@ contract_instance = contract(contract_address)
 while True :
     sql = 'SELECT _id FROM metaData ORDER BY _id DESC LIMIT 1;'
     curs.execute(sql)
-    temp_index = curs.fetchone()    #현재 DB에 저장된 마지막 열의 index를 가져온다.)
-    temp_index = temp_index[0]
+    temp_index = curs.fetchone()    #현재 DB에 저장된 마지막 열의 index를 가져온다.
+    if temp_index is None :         #데이터베이스에 저장된 내용이 아무것도 없다면 실행
+        f_values = contract_instance.call().getUser(0)
+        curs.execute("""INSERT INTO metaData VALUES(%s,%s,%s,%s,%s,%s)""", (0,f_values[1],f_values[2],f_values[3],f_values[4],f_values[5]))
+        conn.commit()
+        continue
+    temp_index = temp_index[0]          #테이블의 index를 정수형으로 가져옴(튜플로 반환되기 때문)
     contract_index = int(contract_instance.call().getIndex())   #현재 컨트랙트에 저장된 마지막 배열의 index
-    while contract_index > temp_index :
+    while contract_index > temp_index : #컨트랙트 배열의 index가 테이블의 index보다 크다면 컨트랙트에 저장된 데이터를 데이터베이스에 저장
         temp_index += 1
         contract_value = contract_instance.call().getUser(temp_index)
         db_value = eval(contract_value)
