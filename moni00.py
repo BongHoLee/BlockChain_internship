@@ -33,7 +33,7 @@ now = datetime.now()                                                #현재 시�
 
 rpc_url = "http://192.168.1.2:8545"                         #Mac mini의 geth와 통신하기 위한 HTTPProvider
 w3 = Web3(HTTPProvider(rpc_url))
-contract = w3.eth.contract(abi=[{'constant': False, 'inputs': [{'name': '_dbData', 'type': 'string'}], 'name': 'insertData', 'outputs': [], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'getIndex', 'outputs': [{'name': 'count', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [{'name': 'id', 'type': 'uint256'}], 'name': 'getUser', 'outputs': [{'name': 'dbData', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}])
+contract = w3.eth.contract(abi=[{'constant': True, 'inputs': [{'name': 'id', 'type': 'uint256'}], 'name': 'getData', 'outputs': [{'name': 'dbData', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': False, 'inputs': [{'name': '_dbData', 'type': 'string'}], 'name': 'insertData', 'outputs': [], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'getIndex', 'outputs': [{'name': 'count', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}])
 
 """openRTSP 카메라 구동 스레드"""
 def Camera2(i) :
@@ -65,6 +65,7 @@ def Camera(i) :
 
 """데이터베이스에 Insert 하기위한 메소드"""
 def insert_db(ipfsAd,Enc_AES) :
+    print('insert_db start')
     filename=ipfsAd.decode().split(' ')[-1].strip()         #영상 파일 이름을 저장하기 위한 변수, 공백 제거 처리
     filehash=ipfsAd.decode().split(' ')[-2]                 #영상 파일의 IPFS hash를 저장하기 위한 변수
     dt = datetime.today().strftime('%Y-%m-%d|%H:%M:%S')    #영상 파일이 데이터베이스에 thread되는 시점을 명시
@@ -174,7 +175,7 @@ def deploy() :              #스마트컨트랙트에 메타데이터를 저장�
     while True :
         i = 0
         setData = queue2.get()      #queue2에 저장된 데이터(데이터베이스에서 추출한 마지막 열의 메타데이터)를 setData에 저장
-        tx_receipt = w3.eth.getTransactionReceipt('0x05fa22d40cd95bdf0fc0ac4747b7e02c5714883b1a769f8e8099c01b0da8791a') #스마트 컨트랙트의 주소를 추출하기 위해 트랜잭션의 주소를 가져옴
+        tx_receipt = w3.eth.getTransactionReceipt('0xd501b20ee29b361f7babde65bbc78a13b583e8936a09aa235cde71289c39ebdb') #스마트 컨트랙트의 주소를 추출하기 위해 트랜잭션의 주소를 가져옴
         contract_address = tx_receipt['contractAddress']
         contract_instance = contract(contract_address)#컨트랙트 주소를 이용해서 컨트랙트 인스턴스 생성
         # Set
@@ -185,14 +186,14 @@ def deploy() :              #스마트컨트랙트에 메타데이터를 저장�
 
         temp = contract_instance.call().getIndex()                  #컨트랙트내의 배열 인덱스를 가져옴, 이 인덱스를 가지고 컨트랙트 배열에 저장된 메타데이터를 추출
         print('last index : {} '.format(temp))
-        print('inserted value get : {} '.format(contract_instance.call().getUser(temp)))
+        print('inserted value get : {} '.format(contract_instance.call().getData(temp)))
         queue2.task_done()
         print('deploy task done')
 
 
 if __name__ == '__main__' :
-    Camera_thread = threading.Thread(target=Camera, args=(0,))
-    Camera_thread.daemon = True
+    #Camera_thread = threading.Thread(target=Camera, args=(0,))
+    #Camera_thread.daemon = True
     Camera2_thread = threading.Thread(target=Camera2, args=(0,))
     Camera2_thread.daemon = True
     Camera3_thread = threading.Thread(target=Camera3, args=(0,))
@@ -202,7 +203,7 @@ if __name__ == '__main__' :
     observer = Observer()
     observer.schedule(event_handler, path=Camerapath, recursive=True)
     observer.start()
-    Camera_thread.start()
+    #Camera_thread.start()
     Camera2_thread.start()
     Camera3_thread.start()
     time.sleep(3)
