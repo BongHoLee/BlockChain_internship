@@ -20,22 +20,22 @@ def readprivatePEM() :
 
 def readpublicPEM() :
     f = open(PublicKeyPath, 'r')
-    key = RSA.importKey(f.read())
-    h.close
+    key = RSA.importKey(f.read())   #read public_key from mypub.key.txt
+    f.close()
     return key
 
-def rsa_enc(msg) :  # encryption msg using public_key
-    private_key = readprivatePEM()
-    public_key = private_key.publickey()
-    encdata = public_key.encrypt(msg, 32)
+def rsa_enc(msg) :  # encryption msg(AES_key) using public_key
+    private_key = readprivatePEM()          #private_key를 읽어와서 저장
+    public_key = private_key.publickey()    #해당 priavte_key를 이용해서 public_key를 가져옴
+    encdata = public_key.encrypt(msg, 32)   #public_key를 이용해서 msg를 encryption
     return encdata
 
-def rsa_dec(msg) :  # decryption msg using private_key
+def rsa_dec(msg) :  # decryption msg(enc_AES_KEY) using private_key
     private_key = readprivatePEM()
     decdata = private_key.decrypt(msg)
     return decdata
 
-""" RAS KEY def END """
+""" RSA KEY def END """
 
 
 
@@ -53,56 +53,21 @@ def decrypt_file(key, in_filename, out_filename, chunksize=24 * 1024):
                 outfile.write(decryptor.decrypt(chunk))
             outfile.truncate(origsize)
 
-
+#AES KEY를 이용해서 영상을 암호화 하기 위함, key는 AES_KEY, in_filename은 영상 이름 삽입
 def encrypt_file(key, in_filename, out_filename=None, chunksize=65536):
     if not out_filename:
         out_filename = in_filename + '.enc'
-    iv = b'initialvector123'
-    encryptor = AES.new(key, AES.MODE_CBC, iv)
-    filesize = os.path.getsize(in_filename)
-    with open(in_filename, 'rb') as infile:
-        with open(out_filename, 'wb') as outfile:
-            outfile.write(struct.pack('<Q', filesize))
-            outfile.write(iv)
+    iv = b'initialvector123'                    #초기화 벡터를 따로 지정해줌, 이후 복호화 할 때에도 무조건 필요
+    encryptor = AES.new(key, AES.MODE_CBC, iv)  #AES key와 초기화벡터(iv)를 이용해서 CBC모드로 암호화 하기 위한 객체
+    filesize = os.path.getsize(in_filename)     #암호화 하려는 영상 파일의 크기를 가져옴
+    with open(in_filename, 'rb') as infile:     #영상 파일의 내용을 infile이라는 이름으로 저장
+        with open(out_filename, 'wb') as outfile:   #원본 영상 파일을 암호화파일로 만들기 위함
+            outfile.write(struct.pack('<Q', filesize))  #struct.pack은 형변환. 즉 원본파일의 사이즈 만큼 형변환해서 암호화
+            outfile.write(iv)                           #초기화 벡터를 같이 넣어준다.
             while True:
-                chunk = infile.read(chunksize)
-                if len(chunk) == 0:
+                chunk = infile.read(chunksize)          #원본파일을 chunksize만큼 읽어서 chunk변수에 저장
+                if len(chunk) == 0:                     #chunk 사이즈가 0이라면 (읽어온 내용이 없다면) 암호화 종료
                     break
-                elif len(chunk) % 16 != 0:
+                elif len(chunk) % 16 != 0:                  #읽어온 사이즈가 16바이트로 나누어 떨어지지 않는다면 나누어 떨어질만큼 공백을 삽입
                     chunk += b' ' * (16 - len(chunk) % 16)
-                outfile.write(encryptor.encrypt(chunk))
-
-"""AES KEY def END """
-
-"""
-def main():
-
-    key = Random.new().read(32)     #AES_key to encrypt mov
-    enc_key = rsa_enc(key)          #AES_key.enc by public_key
-    dec_key = rsa_dec(enc_key)      #AES_key.dec by private_key
-    print binascii.hexlify(bytearray(key))
-    in_filename = './test.mov'
-    encrypt_file(key, in_filename, out_filename='output')   #encrypt mov with AES_KEY
-    print 'Encrypte Done !'
-
-    f=open('myAeskye.txt','w')      #store encrypted AES_KEY
-    f.write(str(enc_key))
-    f.close()
-    g=open('myAeskye.txt', 'r')     #export encrypted AES_KEY
-    line = g.readline()
-    g.close()
-
-
-    test = eval(line)# ***** important!!!!!! tuple -> encrypted AES_KEY
-    print(test)
-    line = rsa_dec(test)            #decrypted AES_KEY
-    print(line)
-    #test = rsa_dec(line2)
-    #print(test)
-    #decrypt
-    decrypt_file(line, in_filename='output', out_filename='original.mov')
-    #outfile = open('original.mov')
-
-
-main()
-"""
+                outfile.write(encryptor.encrypt(chunk))     #chunk크기만큼 AES_key로 암호화 
