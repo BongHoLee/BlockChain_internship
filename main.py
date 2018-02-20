@@ -277,18 +277,18 @@ def deploy() :              #스마트컨트랙트에 메타데이터를 저장�
 if __name__ == '__main__' :
     #Camera_thread = threading.Thread(target=Camera, args=(0,))
     #Camera_thread.daemon = True
-    #Camera2_thread = threading.Thread(target=Camera2, args=(0,))
-    #Camera2_thread.daemon = True
-    #Camera3_thread = threading.Thread(target=Camera3, args=(0,))
-    #Camera3_thread.daemon = True
+    Camera2_thread = threading.Thread(target=Camera2, args=(0,))
+    Camera2_thread.daemon = True
+    Camera3_thread = threading.Thread(target=Camera3, args=(0,))
+    Camera3_thread.daemon = True
     deplpy_thread = threading.Thread(target = deploy)
     event_handler = LogHandler()
     observer = Observer()
     observer.schedule(event_handler, path=Camerapath, recursive=True)
     observer.start()
     #Camera_thread.start()
-    #Camera2_thread.start()
-    #Camera3_thread.start()
+    Camera2_thread.start()
+    Camera3_thread.start()
     time.sleep(3)
     upload = threading.Thread(target = upload_thread, args=(now.year, now.month, now.day))
     upload.start()

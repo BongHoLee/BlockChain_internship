@@ -342,7 +342,7 @@ def dirUpdate2(temp_year, temp_month, temp_day, ipfsAd) :
         root_path = ('rootDir',)                #위와 같은 작업을 rootDirectory를 기준으로 실행
         cur.execute(sql, root_path)
         root_hash = str(cur.fetchone()[0])
-        
+
         up_d = subprocess.check_output('/usr/local/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #기존의 IPFS directory에 day에 해당하는 위치에 영상을 link했을 때 반환되는 수정된 day의 hash를 저장
         sql = 'UPDATE Camera3 SET hash=? WHERE path=?'      #수정된 month의 hash로 데이터베이스를 업데이트
         update=(str(up_d), 'rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)) #갱신된 day로 table update
@@ -413,15 +413,18 @@ def dirUpdate3(temp_year, temp_month, temp_day, ipfsAd) :
         return up_r
     elif 'bCAM' in clip_name:
         sql='INSERT INTO Camera2 (path, hash) VALUES (?, ?)'
-        insert_value = ('rootDir/'+str(temp_year), str(emptyDir))   #년도가 다르다면 년도, 월(1), 일(1) 세 개의 디렉토리를 생성해야 하므로 먼저 데이터베이스에 INSERT 해줌
+        insert_value = ('rootDir/'+str(temp_year), str(emptyDir))   #년도가 다르다면 년도, 월(1), 일(1) 세 개의 디렉토리를 생성해야 하므로 먼저 데이터베이스에  INSERT 해줌(빈디렉토리)
         cur.execute(sql, insert_value)
         conn.commit()
-        insert_value = ('rootDir/'+str(temp_year)+'/'+str(temp_month), str(emptyDir))
+        insert_value = ('rootDir/'+str(temp_year)+'/'+str(temp_month), str(emptyDir))   # year/month insert
         cur.execute(sql, insert_value)
         conn.commit()
-        insert_value = ('rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day), str(emptyDir))
+        insert_value = ('rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day), str(emptyDir)) # year/month/day insert
+        cur.execute(sql, insert_value)
+        conn.commit()
+
         sql='SELECT hash FROM Camera2 WHERE path=?'     #Camera1 테이블에서 path에 해당하는 ipfs hash를 가져옴
-        day_path = ('rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day),)   #현재 날짜에 해당하는 ipfs directory에서 day의 이름을 저장
+        day_path = ('rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day),)   #현재 날짜에 해당하는 ipfs directory에서 day의 이름을 day_path 변수에저장
         cur.execute(sql, day_path)          #sql실행
         day_hash = str(cur.fetchone()[0])   #sql실행 결과로 반환된 ipfs day hash를 day_hash에 저장
         month_path=('rootDir/'+str(temp_year)+'/'+str(temp_month),) #현재 날짜에 해당하는 ipfs directory에서 month 디렉토리의 이름을 저장
@@ -433,6 +436,7 @@ def dirUpdate3(temp_year, temp_month, temp_day, ipfsAd) :
         root_path = ('rootDir',)                #위와 같은 작업을 rootDirectory를 기준으로 실행
         cur.execute(sql, root_path)
         root_hash = str(cur.fetchone()[0])
+
         up_d = subprocess.check_output('/usr/local/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #기존의 IPFS directory에 day에 해당하는 위치에 영상을 link했을 때 반환되는 수정된 day의 hash를 저장
         sql = 'UPDATE Camera2 SET hash=? WHERE path=?'      #수정된 month의 hash로 데이터베이스를 업데이트
         update=(str(up_d), 'rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)) #갱신된 day로 table update
@@ -454,15 +458,18 @@ def dirUpdate3(temp_year, temp_month, temp_day, ipfsAd) :
         return up_r
     elif 'cCAM' in clip_name:
         sql='INSERT INTO Camera3 (path, hash) VALUES (?, ?)'
-        insert_value = ('rootDir/'+str(temp_year), str(emptyDir))   #년도가 다르다면 년도, 월(1), 일(1) 세 개의 디렉토리를 생성해야 하므로 먼저 데이터베이스에 INSERT 해줌
+        insert_value = ('rootDir/'+str(temp_year), str(emptyDir))   #년도가 다르다면 년도, 월(1), 일(1) 세 개의 디렉토리를 생성해야 하므로 먼저 데이터베이스에  INSERT 해줌(빈디렉토리)
         cur.execute(sql, insert_value)
         conn.commit()
-        insert_value = ('rootDir/'+str(temp_year)+'/'+str(temp_month), str(emptyDir))
+        insert_value = ('rootDir/'+str(temp_year)+'/'+str(temp_month), str(emptyDir))   # year/month insert
         cur.execute(sql, insert_value)
         conn.commit()
-        insert_value = ('rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day), str(emptyDir))
+        insert_value = ('rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day), str(emptyDir)) # year/month/day insert
+        cur.execute(sql, insert_value)
+        conn.commit()
+
         sql='SELECT hash FROM Camera3 WHERE path=?'     #Camera1 테이블에서 path에 해당하는 ipfs hash를 가져옴
-        day_path = ('rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day),)   #현재 날짜에 해당하는 ipfs directory에서 day의 이름을 저장
+        day_path = ('rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day),)   #현재 날짜에 해당하는 ipfs directory에서 day의 이름을 day_path 변수에저장
         cur.execute(sql, day_path)          #sql실행
         day_hash = str(cur.fetchone()[0])   #sql실행 결과로 반환된 ipfs day hash를 day_hash에 저장
         month_path=('rootDir/'+str(temp_year)+'/'+str(temp_month),) #현재 날짜에 해당하는 ipfs directory에서 month 디렉토리의 이름을 저장
@@ -474,6 +481,7 @@ def dirUpdate3(temp_year, temp_month, temp_day, ipfsAd) :
         root_path = ('rootDir',)                #위와 같은 작업을 rootDirectory를 기준으로 실행
         cur.execute(sql, root_path)
         root_hash = str(cur.fetchone()[0])
+
         up_d = subprocess.check_output('/usr/local/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #기존의 IPFS directory에 day에 해당하는 위치에 영상을 link했을 때 반환되는 수정된 day의 hash를 저장
         sql = 'UPDATE Camera3 SET hash=? WHERE path=?'      #수정된 month의 hash로 데이터베이스를 업데이트
         update=(str(up_d), 'rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)) #갱신된 day로 table update
