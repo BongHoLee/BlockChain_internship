@@ -49,8 +49,7 @@ def daemon() :
 """openRTSP 카메라 구동 스레드"""
 def Camera2(i) :
     os.chdir(Camerapath)
-    i+=1
-    now = datetime.now()
+    i=i+1
     try :
         sub = subprocess.check_output('openRTSP -D 3 -B 250000 -b 250000 -c -i -F bCAM'+ str(i) +' -P 90 rtsp://192.168.1.217//stream1', stderr=subprocess.STDOUT, shell=True)
     except :
@@ -59,8 +58,7 @@ def Camera2(i) :
 
 def Camera3(i) :
     os.chdir(Camerapath)
-    i+=1
-    temp = datetime.now()
+    i=i+1
     try :
         sub = subprocess.check_output('openRTSP -D 3 -B 250000 -b 250000 -c -i -F cCAM'+ str(i) +' -P 90 rtsp://192.168.1.18:8554/unicast', stderr=subprocess.STDOUT, shell=True)
     except :
@@ -69,8 +67,7 @@ def Camera3(i) :
 
 def Camera(i) :
     os.chdir(Camerapath)    #Camera_ 디렉토리에서 해당 프로그램 실행을 위한 경로 설정
-    i+=1                   #프로세스가 원치않게 종료후 다시 실행되었을 때 영상 파일 이름을 명시하기 위한 변수
-    now = datetime.now()
+    i=i+1                   #프로세스가 원치않게 종료후 다시 실행되었을 때 영상 파일 이름을 명시하기 위한 변수
     try:
         sub = subprocess.check_output('openRTSP -D 3 -B 250000 -b 250000 -c -i -F aCAM'+ str(i) +' -P 90 -u admin admin rtsp://192.168.1.10/11', stderr=subprocess.STDOUT, shell=True)
     except :
@@ -152,100 +149,55 @@ def upload_thread(temp_year, temp_month, temp_day) :
                 time.sleep(10)
                 ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
             clip_name=ipfsAdd.decode().split(' ')[-1].strip()
-            time.sleep(10)
             if 'aCAM' in clip_name :
-                day_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)
-                month_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)
-                year_path = 'rootDir'+'/'+str(temp_year)
-                sql = 'SELECT EXISTS (SELECT * FROM Camera1 WHERE path=?)'
-                day = (day_path,)
-                month = (month_path,)
-                year = (year_path,)
-                cur.execute(sql,day)
-                check_day = cur.fetchone()[0]
-                cur.execute(sql,month)
-                check_month = cur.fetchone()[0]
-                cur.execute(sql,year)
-                check_year = cur.fetchone()[0]
-
-                if check_year == 1 :      #암호화된 영상 파일을 IPFS 디렉토리에 저장 후 갱신하기 위한 조건문 시작, 년도/월/일 구분
-                    if check_month == 1 :    #년도와 월이 변화가 없다면
-                        if check_day == 1 :    #년도와 월과 일이 변화가 없다면 dirUpdate1 함수 실행
+                if now.year == Cam1_year :      #암호화된 영상 파일을 IPFS 디렉토리에 저장 후 갱신하기 위한 조건문 시작, 년도/월/일 구분
+                    if now.month == Cam1_month :    #년도와 월이 변화가 없다면
+                        if now.day == Cam1_day :    #년도와 월과 일이 변화가 없다면 dirUpdate1 함수 실행
                             root_hash = updateDir.dirUpdate1(now.year, now.month, now.day, ipfsAdd)
-                        elif check_day == 0 :  #년도와 월은 변화가 없지만 일이 변했다면
+                        elif now.day != Cam1_day :  #년도와 월은 변화가 없지만 일이 변했다면
                             Cam1_day = now.day      #기존의 일수를 현재 일로 변경시켜주고 dirUpdate1_1 함수 실행
                             root_hash = updateDir.dirUpdate1_1(now.year, now.month, now.day, ipfsAdd)
-                    elif check_month == 0 :  #년도는 같지만 월이 다르다면
+                    elif now.month != Cam1_month and now.day == 1:  #년도는 같지만 월이 다르다면
                         Cam1_day = now.day     #month가 지나면 day는 1이 됨
                         Cam1_month = now.month #기존에 저장된 temp_month와 현재의 now.month가 다르다면 한 달이 넘어갔음을 의미
                         root_hash = updateDir.dirUpdate2(now.year, now.month, now.day, ipfsAdd)  #년도는 같지만 월이 다른경우 dirUpdate2 실행시켜줌, 월이 다르다면 당연히 일도 다름
-                elif check_year == 0 : #년도가 바뀌었을 때에는 1월 1일이니까 month=1, day=1로 변화
+                elif now.year != Cam1_year and now.month == 1 : #년도가 바뀌었을 때에는 1월 1일이니까 month=1, day=1로 변화
                     Cam1_year = now.year
                     Cam1_month = now.month
                     Cam1_day = now.day
                     root_hash = updateDir.dirUpdate3(now.year, now.month, now.day, ipfsAdd)
             elif 'bCAM' in clip_name :
-                day_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)
-                month_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)
-                year_path = 'rootDir'+'/'+str(temp_year)
-                sql = 'SELECT EXISTS (SELECT * FROM Camera1 WHERE path=?)'
-                day = (day_path,)
-                month = (month_path,)
-                year = (year_path,)
-                cur.execute(sql,day)
-                check_day = cur.fetchone()[0]
-                cur.execute(sql,month)
-                check_month = cur.fetchone()[0]
-                cur.execute(sql,year)
-                check_year = cur.fetchone()[0]
-
-                if check_year == 1 :      #암호화된 영상 파일을 IPFS 디렉토리에 저장 후 갱신하기 위한 조건문 시작, 년도/월/일 구분
-                    if check_month == 1 :    #년도와 월이 변화가 없다면
-                        if check_day == 1 :    #년도와 월과 일이 변화가 없다면 dirUpdate1 함수 실행
+                if now.year == Cam2_year :      #암호화된 영상 파일을 IPFS 디렉토리에 저장 후 갱신하기 위한 조건문 시작, 년도/월/일 구분
+                    if now.month == Cam2_month :    #년도와 월이 변화가 없다면
+                        if now.day == Cam2_day :    #년도와 월과 일이 변화가 없다면 dirUpdate1 함수 실행
                             root_hash = updateDir.dirUpdate1(now.year, now.month, now.day, ipfsAdd)
-                        elif check_day == 0 :  #년도와 월은 변화가 없지만 일이 변했다면
+                        elif now.day != Cam2_day :  #년도와 월은 변화가 없지만 일이 변했다면
                             Cam2_day = now.day      #기존의 일수를 현재 일로 변경시켜주고 dirUpdate1_1 함수 실행
                             root_hash = updateDir.dirUpdate1_1(now.year, now.month, now.day, ipfsAdd)
-                    elif check_month == 0 :  #년도는 같지만 월이 다르다면
+                    elif now.month != Cam2_month and now.day == 1:  #년도는 같지만 월이 다르다면
                         Cam2_day = now.day     #month가 지나면 day는 1이 됨
                         Cam2_month = now.month #기존에 저장된 temp_month와 현재의 now.month가 다르다면 한 달이 넘어갔음을 의미
                         root_hash = updateDir.dirUpdate2(now.year, now.month, now.day, ipfsAdd)  #년도는 같지만 월이 다른경우 dirUpdate2 실행시켜줌, 월이 다르다면 당연히 일도 다름
-                elif check_year == 0 : #년도가 바뀌었을 때에는 1월 1일이니까 month=1, day=1로 변화
+                elif now.year != Cam1_year and now.month == 1 : #년도가 바뀌었을 때에는 1월 1일이니까 month=1, day=1로 변화
                     Cam2_year = now.year
                     Cam2_month = now.month
                     Cam2_day = now.day
-                    root_hash = updateDir.dirUpdate3(now.year, now.month, now.day, ipfsAdd)
             elif 'cCAM' in clip_name :
-                day_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)
-                month_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)
-                year_path = 'rootDir'+'/'+str(temp_year)
-                sql = 'SELECT EXISTS (SELECT * FROM Camera1 WHERE path=?)'
-                day = (day_path,)
-                month = (month_path,)
-                year = (year_path,)
-                cur.execute(sql,day)
-                check_day = cur.fetchone()[0]
-                cur.execute(sql,month)
-                check_month = cur.fetchone()[0]
-                cur.execute(sql,year)
-                check_year = cur.fetchone()[0]
-
-                if check_year == 1 :      #암호화된 영상 파일을 IPFS 디렉토리에 저장 후 갱신하기 위한 조건문 시작, 년도/월/일 구분
-                    if check_month == 1 :    #년도와 월이 변화가 없다면
-                        if check_day == 1 :    #년도와 월과 일이 변화가 없다면 dirUpdate1 함수 실행
+                if now.year == Cam3_year :      #암호화된 영상 파일을 IPFS 디렉토리에 저장 후 갱신하기 위한 조건문 시작, 년도/월/일 구분
+                    if now.month == Cam3_month :    #년도와 월이 변화가 없다면
+                        if now.day == Cam3_day :    #년도와 월과 일이 변화가 없다면 dirUpdate1 함수 실행
                             root_hash = updateDir.dirUpdate1(now.year, now.month, now.day, ipfsAdd)
-                        elif check_day == 0 :  #년도와 월은 변화가 없지만 일이 변했다면
+                        elif now.day != Cam3_day :  #년도와 월은 변화가 없지만 일이 변했다면
                             Cam3_day = now.day      #기존의 일수를 현재 일로 변경시켜주고 dirUpdate1_1 함수 실행
                             root_hash = updateDir.dirUpdate1_1(now.year, now.month, now.day, ipfsAdd)
-                    elif check_month == 0 :  #년도는 같지만 월이 다르다면
+                    elif now.month != Cam3_month and now.day == 1:  #년도는 같지만 월이 다르다면
                         Cam3_day = now.day     #month가 지나면 day는 1이 됨
                         Cam3_month = now.month #기존에 저장된 temp_month와 현재의 now.month가 다르다면 한 달이 넘어갔음을 의미
                         root_hash = updateDir.dirUpdate2(now.year, now.month, now.day, ipfsAdd)  #년도는 같지만 월이 다른경우 dirUpdate2 실행시켜줌, 월이 다르다면 당연히 일도 다름
-                elif check_year == 0 : #년도가 바뀌었을 때에는 1월 1일이니까 month=1, day=1로 변화
+                elif now.year != Cam1_year and now.month == 1 : #년도가 바뀌었을 때에는 1월 1일이니까 month=1, day=1로 변화
                     Cam3_year = now.year
                     Cam3_month = now.month
                     Cam3_day = now.day
-                    root_hash = updateDir.dirUpdate3(now.year, now.month, now.day, ipfsAdd)
             insert_db(ipfsAdd, enc_key)                 #ipfs의 hash와 암호화된 AES_key를 인자로 넘겨서 DB thread 함수 호출
             queue.task_done()                           #queue작업이 수행되었음을 알림.
             print('task_done')
@@ -277,18 +229,18 @@ def deploy() :              #스마트컨트랙트에 메타데이터를 저장�
 if __name__ == '__main__' :
     #Camera_thread = threading.Thread(target=Camera, args=(0,))
     #Camera_thread.daemon = True
-    #Camera2_thread = threading.Thread(target=Camera2, args=(0,))
-    #Camera2_thread.daemon = True
-    #Camera3_thread = threading.Thread(target=Camera3, args=(0,))
-    #Camera3_thread.daemon = True
+    Camera2_thread = threading.Thread(target=Camera2, args=(0,))
+    Camera2_thread.daemon = True
+    Camera3_thread = threading.Thread(target=Camera3, args=(0,))
+    Camera3_thread.daemon = True
     deplpy_thread = threading.Thread(target = deploy)
     event_handler = LogHandler()
     observer = Observer()
     observer.schedule(event_handler, path=Camerapath, recursive=True)
     observer.start()
     #Camera_thread.start()
-    #Camera2_thread.start()
-    #Camera3_thread.start()
+    Camera2_thread.start()
+    Camera3_thread.start()
     time.sleep(3)
     upload = threading.Thread(target = upload_thread, args=(now.year, now.month, now.day))
     upload.start()
