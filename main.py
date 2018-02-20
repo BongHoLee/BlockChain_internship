@@ -50,9 +50,8 @@ def daemon() :
 def Camera2(i) :
     os.chdir(Camerapath)
     i+=1
-    now = datetime.now()
     try :
-        sub = subprocess.check_output('openRTSP -D 3 -B 250000 -b 250000 -c -i -F bCAM'+ str(i) +' -P 90 rtsp://192.168.1.217//stream1', stderr=subprocess.STDOUT, shell=True)
+        sub = subprocess.check_output('openRTSP -D 3 -B 250000 -b 250000 -c -i -F bCAM'+ str(i) +' -P 60 rtsp://192.168.1.217//stream1', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
         Camera2(i)
@@ -60,9 +59,8 @@ def Camera2(i) :
 def Camera3(i) :
     os.chdir(Camerapath)
     i+=1
-    temp = datetime.now()
     try :
-        sub = subprocess.check_output('openRTSP -D 3 -B 250000 -b 250000 -c -i -F cCAM'+ str(i) +' -P 90 rtsp://192.168.1.18:8554/unicast', stderr=subprocess.STDOUT, shell=True)
+        sub = subprocess.check_output('openRTSP -D 3 -B 250000 -b 250000 -c -i -F cCAM'+ str(i) +' -P 60 rtsp://192.168.1.18:8554/unicast', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
         Camera3(i)
@@ -70,9 +68,8 @@ def Camera3(i) :
 def Camera(i) :
     os.chdir(Camerapath)    #Camera_ 디렉토리에서 해당 프로그램 실행을 위한 경로 설정
     i+=1                   #프로세스가 원치않게 종료후 다시 실행되었을 때 영상 파일 이름을 명시하기 위한 변수
-    now = datetime.now()
     try:
-        sub = subprocess.check_output('openRTSP -D 3 -B 250000 -b 250000 -c -i -F aCAM'+ str(i) +' -P 90 -u admin admin rtsp://192.168.1.10/11', stderr=subprocess.STDOUT, shell=True)
+        sub = subprocess.check_output('openRTSP -D 3 -B 250000 -b 250000 -c -i -F aCAM'+ str(i) +' -P 60 -u admin admin rtsp://192.168.1.10/11', stderr=subprocess.STDOUT, shell=True)
     except :
         print("error")
         Camera(i)                   #원치않게 스레드가 종료되었을 때 다시 실행하기 위해서 재귀 호출
@@ -188,7 +185,7 @@ def upload_thread(temp_year, temp_month, temp_day) :
                 day_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)
                 month_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)
                 year_path = 'rootDir'+'/'+str(temp_year)
-                sql = 'SELECT EXISTS (SELECT * FROM Camera1 WHERE path=?)'
+                sql = 'SELECT EXISTS (SELECT * FROM Camera2 WHERE path=?)'
                 day = (day_path,)
                 month = (month_path,)
                 year = (year_path,)
@@ -219,7 +216,7 @@ def upload_thread(temp_year, temp_month, temp_day) :
                 day_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)
                 month_path = 'rootDir'+'/'+str(temp_year)+'/'+str(temp_month)
                 year_path = 'rootDir'+'/'+str(temp_year)
-                sql = 'SELECT EXISTS (SELECT * FROM Camera1 WHERE path=?)'
+                sql = 'SELECT EXISTS (SELECT * FROM Camera3 WHERE path=?)'
                 day = (day_path,)
                 month = (month_path,)
                 year = (year_path,)
@@ -277,18 +274,18 @@ def deploy() :              #스마트컨트랙트에 메타데이터를 저장�
 if __name__ == '__main__' :
     #Camera_thread = threading.Thread(target=Camera, args=(0,))
     #Camera_thread.daemon = True
-    Camera2_thread = threading.Thread(target=Camera2, args=(0,))
-    Camera2_thread.daemon = True
-    Camera3_thread = threading.Thread(target=Camera3, args=(0,))
-    Camera3_thread.daemon = True
+    #Camera2_thread = threading.Thread(target=Camera2, args=(0,))
+    #Camera2_thread.daemon = True
+    #Camera3_thread = threading.Thread(target=Camera3, args=(0,))
+    #Camera3_thread.daemon = True
     deplpy_thread = threading.Thread(target = deploy)
     event_handler = LogHandler()
     observer = Observer()
     observer.schedule(event_handler, path=Camerapath, recursive=True)
     observer.start()
     #Camera_thread.start()
-    Camera2_thread.start()
-    Camera3_thread.start()
+    #Camera2_thread.start()
+    #Camera3_thread.start()
     time.sleep(3)
     upload = threading.Thread(target = upload_thread, args=(now.year, now.month, now.day))
     upload.start()
