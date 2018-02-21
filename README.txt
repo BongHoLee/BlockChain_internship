@@ -13,6 +13,11 @@
 -	Filelog.txt : 일전에 모니터링 프로그램을 만들 때에 영상이 제대로 저장되는지 log를 남기기 위한 텍스트 파일입니다. 현재는 database table에 저장하기 때문에 큰 필요성은 없습니다.
 
 
+해당 프로그램은 Mac book에서 테스트 이후 Rasspberry pi로 이식합니다.
+현재 코드는 Mac book에서 작성하고 테스트되었기 때문에 영상 clip이 저장되는 디렉토리 등의 path가 Raspberry pi의 환경과 다릅니다.
+Raspberry pi로 이식한 뒤에는 path설정을 환경에 맞게 재구성 해주어야합니다.
+main.py, EncDec.py 두개 스크립트의 상단에 정의된 path만 변경해주시면 됩니다.
+
 
 설치해야할 모듈
 
@@ -25,5 +30,5 @@ pycryptodome의 경우 web3를 설치하는 과정에서 같이 설치가 됩니
 2. pip insatll geocoder
 3. pip install py-solc
 4. pip install Web3
-5. pip uninsatll pycryptodome
-6. pip install pycrypto
+5. pip uninsatll pycryptodome           -> pycryptodome 삭제
+6. pip install pycrypto                 -> pycrypto 설치

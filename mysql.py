@@ -28,8 +28,9 @@ while True :
     curs.execute(sql)
     temp_index = curs.fetchone()    #현재 DB에 저장된 마지막 열의 index를 가져온다.
     if temp_index is None :         #데이터베이스에 저장된 내용이 아무것도 없다면 실행
-        f_values = contract_instance.call().getData(0)
-        curs.execute("""INSERT INTO metaData VALUES(%s,%s,%s,%s,%s,%s)""", (0,f_values[1],f_values[2],f_values[3],f_values[4],f_values[5]))
+        contract_value = contract_instance.call().getData(0)            #get metaData from smart contract with index 0
+        f_values = eval(contract_value)                                 #transform metaData to insert Data Base
+        curs.execute("""INSERT INTO metaData VALUES(%s,%s,%s,%s,%s,%s,%s,%s)""", (0,f_values[1],f_values[2],f_values[3],f_values[4],f_values[5],f_values[6],f_values[7]))
         conn.commit()
         continue
     temp_index = temp_index[0]          #테이블의 index를 정수형으로 가져옴(튜플로 반환되기 때문)
@@ -38,7 +39,7 @@ while True :
         temp_index += 1                 #DB index를 1씩 증가(컨트랙트 배열의 index를 1씩 증가시켜서 가져오기 위함)
         contract_value = contract_instance.call().getData(temp_index)   #contract에 저장된 메타데이터(string형)를 저장
         db_value = eval(contract_value) #String형으로 저장된 contract의 값을 가져와서 eval()함수로 각각 분리.(수행시 각 테이블의 속성에 맞게 분리됨)
-        curs.execute("""INSERT INTO metaData VALUES(%s,%s,%s,%s,%s,%s)""", (temp_index, db_value[1], db_value[2], db_value[3], db_value[4], db_value[5]))#(분리된 값들을 각각 테이블에 넣어줌)
+        curs.execute("""INSERT INTO metaData VALUES(%s,%s,%s,%s,%s,%s,%s,%s)""", (temp_index, db_value[1], db_value[2], db_value[3], db_value[4], db_value[5], db_value[6], db_value[7]))#(분리된 값들을 각각 테이블에 넣어줌)
         conn.commit()
         print('inserted!')
     time.sleep(180)
