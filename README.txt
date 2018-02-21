@@ -11,3 +11,19 @@
 -	mysql.py : 현재 main프로그램과는 상관이 없습니다. 다만 Mac mini에서 smart contract에 저장된 메타데이터를 mysql database table에 저장하는 코드입니다. 독립적으로써 Mac mini에서만 실행합니다.
 -	test.db : sqlite의 데이터베이스 파일입니다. 1분간격 영상의 메타데이터를 저장하기 위한 metaData 테이블, 머클 디렉토리 데이터를 저장하는 Camera1, Camera2, Camera3(카메라 이름으로써 임의로 설정했습니다)테이블이 존재합니다.
 -	Filelog.txt : 일전에 모니터링 프로그램을 만들 때에 영상이 제대로 저장되는지 log를 남기기 위한 텍스트 파일입니다. 현재는 database table에 저장하기 때문에 큰 필요성은 없습니다.
+
+
+
+설치해야할 모듈
+
+**모듈을 설치하시기 전에 주의*******************************************************************************************
+watchdog, geocoder, web3, py-solc와 같은 모듈을 설치하시고 난 뒤 uninstall pycryptodome를 수행후 pycrypto 모듈을 설치해주세요
+pycryptodome 모듈이 존재하면 현재 구현된 암호화 및 복호화 관련 코드가 수행이 안됩니다.
+pycryptodome의 경우 web3를 설치하는 과정에서 같이 설치가 됩니다. 따라서 수동으로 지워주셔야 합니다.
+*****************************************************************************************************************
+1. pip install watchdog
+2. pip insatll geocoder
+3. pip install py-solc
+4. pip install Web3
+5. pip uninsatll pycryptodome
+6. pip install pycrypto
