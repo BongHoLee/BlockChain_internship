@@ -24,13 +24,13 @@ encDir = '/Users/leebongho/monitoring/encCamera_/'                  #encCamera_ 
 metaData = '/Users/leebongho/monitoring/metaData.txt'
 conn = sqlite3.connect('test.db', check_same_thread=False)          #Connect sqlite3 DataBase
 cur = conn.cursor()                                                 #DataBase cursor
-insertQ = Queue()                                                     #Queue for recieve video clip file name
-deployQ = Queue()                                                    #Upload metadata of clip to DB and store it in queue2 to transmit the metadata to smartcontact
+insertQ = Queue()                                                   #Queue for recieve video clip file name
+deployQ = Queue()                                                   #Upload metadata of clip to DB and store it in queue2 to transmit the metadata to smartcontact
 daemonQueue = Queue()                                               #exception handling queue for ipfs daemon
 now = datetime.now()                                                #store now datetime
-uploadQ = Queue()
-waitQ1 = Queue()                                #안올린거 먼저 upload Q에 다 넣을떄까지 대기
-waitQ2 = Queue()                                #안올린거 다 upload Q 에 올리고 새로 생성된거 DB에 삽입할때까지 대기
+uploadQ = Queue()                                                   #
+waitQ1 = Queue()                                                    #안올린거 먼저 upload Q에 다 넣을떄까지 대기
+waitQ2 = Queue()                                                    #안올린거 다 upload Q 에 올리고 새로 생성된거 DB에 삽입할때까지 대기
 
 
 
@@ -84,7 +84,7 @@ def Camera(i) :
 
 """데이터베이스에 Insert 하기위한 스레드"""
 def insert_db() :
-    wait = waitQ1.get()                             #inter_thread가 ready=0인 clip들을 uploadQ에 다 넣을떄까지 대기
+    wait = waitQ1.get()                             #inter_thread가 status=0인 clip들을 uploadQ에 다 넣을떄까지 대기
     while True :
         name = insertQ.get()                                #새로 생성된 clip들의 이름을 가져와서 insert
         print('basic insert start')
@@ -93,22 +93,22 @@ def insert_db() :
         g = geocoder.ip('me')                               #To insert location of clip
         date = str(dt)
         loca = str(g.latlng)
-        ready_flag = 0
-        query = 'INSERT INTO Meta_Data(_name, _date, _loca, ready) VALUES(?, ?, ?, ?)'
-        cur.execute(query, (name, date, loca, ready_flag))
+        status_flag = 0
+        query = 'INSERT INTO Meta_Data(_name, _date, _loca, status) VALUES(?, ?, ?, ?)'
+        cur.execute(query, (name, date, loca, status_flag))
         conn.commit()
         waitQ2.put(1)                                       #새로 생성된 clip들을 db에 insert하고 대기큐2 활성화
 
 def inter_thread() :
     temp = ""                                                   #To store latest name
-    sql = 'SELECT _name FROM Meta_Data WHERE ready=0'
+    sql = 'SELECT _name FROM Meta_Data WHERE status=0'
     cur.execute(sql)
     rows = cur.fetchall()
     for row in rows :                                           #all of not uploaded clip put upload queue
         clip_name = row[0]
         uploadQ.put(clip_name)
         temp = clip_name
-    waitQ1.put(1)                                        # 이전에 생성되고 처리가 안된 ready=0인 애들을 먼저 uploadQ에 다 넣어주고 대기Queue를 풀어줌
+    waitQ1.put(1)                                        # 이전에 생성되고 처리가 안된 status=0인 애들을 먼저 uploadQ에 다 넣어주고 대기Queue를 풀어줌
     while True :
         wait = waitQ2.get()                             #새로 생성된 clip들이 db에 insert 될때까지 대기
         sql = 'SELECT _name FROM Meta_Data ORDER BY _id DESC LIMIT 1;'
@@ -124,11 +124,11 @@ def inter_thread() :
 
 def update_db(clip_name, ipfsAdd, enc_key) :
     print('DB update start')
-    sql = 'UPDATE Meta_Data SET ipfs_hash=?, Enc_AES=?, ready=?, MDR_id=? WHERE _name=?'
-    ready_flag = 1
+    sql = 'UPDATE Meta_Data SET ipfs_hash=?, Enc_AES=?, status=?, MDR_id=? WHERE _name=?'
+    status_flag = 1
     merkle_root = 1
     clip_hash=ipfsAdd.decode().split(' ')[-2]
-    upDB = (clip_hash, str(enc_key), ready_flag, merkle_root, clip_name)
+    upDB = (clip_hash, str(enc_key), status_flag, merkle_root, clip_name)
     cur.execute(sql, upDB)
     conn.commit()
     sql = 'SELECT * FROM Meta_Data WHERE _name=?'
