@@ -42,9 +42,9 @@ contract = w3.eth.contract(abi=[{'constant': True, 'inputs': [{'name': 'id', 'ty
 def daemon() :                      #exception handling when ipfs daemon terminates abnormally
     try:
         daemonQueue.get()           #wait for error flag(daemon quit) in the daemonQueue
-        restart = subprocess.check_output('/usr/local/bin/ipfs repo fsck', stderr=subprocess.STDOUT, shell=True)
+        restart = subprocess.check_output('/Users/leebongho/work/bin/ipfsrepo fsck', stderr=subprocess.STDOUT, shell=True)
         print('daemon resart')
-        redaemon = subprocess.check_output('/usr/local/bin/ipfs daemon', stderr = subprocess.STDOUT, shell=True)
+        redaemon = subprocess.check_output('/Users/leebongho/work/bin/ipfsdaemon', stderr = subprocess.STDOUT, shell=True)
     except :
         daemon()
 
@@ -178,11 +178,11 @@ def upload_thread(temp_year, temp_month, temp_day) :
             print('srtat IPFS Add')
             time.sleep(2)                               #wait for 2 seconds
             try :                                       #ipfs add about encrypted clip
-                ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
+                ipfsAdd=subprocess.check_output('/Users/leebongho/work/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
             except :
                 daemonQueue.put(1)                      #if ipfs daemon was terminated, restart
                 time.sleep(30)
-                ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
+                ipfsAdd=subprocess.check_output('/Users/leebongho/work/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
             clip_name=ipfsAdd.decode().split(' ')[-1].strip()                   #store encrypted clip_name(eqaul to original name of clip)
             time.sleep(30)
             print('IPFS Add Done. updating Merkle Directory')                   #ipfs add done, start merkle directroy update

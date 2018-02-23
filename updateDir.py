@@ -35,20 +35,20 @@ def dirUpdate1(temp_year, temp_month, temp_day, ipfsAd) :         #When year / m
     root_path = ('rootDir',)                #same about rootDir
     cur.execute(sql, root_path)
     root_hash = str(cur.fetchone()[0])
-    up_d = subprocess.check_output('/usr/local/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #Returns a hash of the modified year / month / day directory returned when the clip is linked to the year / month / day directory.
+    up_d = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #Returns a hash of the modified year / month / day directory returned when the clip is linked to the year / month / day directory.
     sql = 'UPDATE merkleDir SET hash=? WHERE path=?'      #Query to update the modified hash(day).
     update=(str(up_d), 'rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)) #table update about modified path (year/month/day)
     cur.execute(sql, update)
     conn.commit()
-    up_m = subprocess.check_output('/usr/local/bin/ipfs object patch '+ month_hash +' add-link ' + str(temp_day) + ' ' + up_d, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #Returns a hash of the modified year / month directory returned when the day directory is linked to the year/month directory
+    up_m = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ month_hash +' add-link ' + str(temp_day) + ' ' + up_d, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #Returns a hash of the modified year / month directory returned when the day directory is linked to the year/month directory
     update=(str(up_m), 'rootDir/'+str(temp_year)+'/'+str(temp_month))   #Query to update modifed hash(month/day)
     cur.execute(sql, update)
     conn.commit()   #업데이트 사항 저장
-    up_y = subprocess.check_output('/usr/local/bin/ipfs object patch '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()  #Returns a hash of the modified year directory returned when the month/day directory is linked to the year directory
+    up_y = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()  #Returns a hash of the modified year directory returned when the month/day directory is linked to the year directory
     update=(str(up_y), 'rootDir/'+str(temp_year))               #Query to update modified hash(year/month/day)
     cur.execute(sql, update)
     conn.commit()
-    up_r = subprocess.check_output('/usr/local/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()   #Returns a hash of the modified rootDir directory returned when the year/month/day directory is linked to the rootDir directory
+    up_r = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()   #Returns a hash of the modified rootDir directory returned when the year/month/day directory is linked to the rootDir directory
     update=(str(up_r), 'rootDir')                               #Query to update modified hash(rootDir/year/month/day)
     cur.execute(sql, update)
     conn.commit()
@@ -74,20 +74,20 @@ def dirUpdate1_1(temp_year, temp_month, temp_day, ipfsAd) :         #year / mont
     root_path = ('rootDir',)                #same
     cur.execute(sql, root_path)
     root_hash = str(cur.fetchone()[0])
-    up_d = subprocess.check_output('/usr/local/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #Same as above dirUpdate1 function
+    up_d = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #Same as above dirUpdate1 function
     sql = 'UPDATE merkleDir SET hash=? WHERE path=?'      ##Same as above dirUpdate1 function
     update=(str(up_d), 'rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)) #Same as above dirUpdate1 function
     cur.execute(sql, update)
     conn.commit()
-    up_m = subprocess.check_output('/usr/local/bin/ipfs object patch '+ month_hash +' add-link ' + str(temp_day) + ' ' + up_d, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #Same as above dirUpdate1 function
+    up_m = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ month_hash +' add-link ' + str(temp_day) + ' ' + up_d, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #Same as above dirUpdate1 function
     update=(str(up_m), 'rootDir/'+str(temp_year)+'/'+str(temp_month))   #Same as above dirUpdate1 function
     cur.execute(sql, update)
     conn.commit()   #업데이트 사항 저장
-    up_y = subprocess.check_output('/usr/local/bin/ipfs object patch '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()  #Same as above dirUpdate1 function
+    up_y = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()  #Same as above dirUpdate1 function
     update=(str(up_y), 'rootDir/'+str(temp_year))
     cur.execute(sql, update)
     conn.commit()
-    up_r = subprocess.check_output('/usr/local/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()   #Same as above dirUpdate1 function
+    up_r = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()   #Same as above dirUpdate1 function
     update=(str(up_r), 'rootDir')
     cur.execute(sql, update)
     conn.commit()
@@ -118,20 +118,20 @@ def dirUpdate2(temp_year, temp_month, temp_day, ipfsAd) :
     root_path = ('rootDir',)                #
     cur.execute(sql, root_path)
     root_hash = str(cur.fetchone()[0])
-    up_d = subprocess.check_output('/usr/local/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #
+    up_d = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #
     sql = 'UPDATE merkleDir SET hash=? WHERE path=?'      #
     update=(str(up_d), 'rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)) #
     cur.execute(sql, update)
     conn.commit()
-    up_m = subprocess.check_output('/usr/local/bin/ipfs object patch '+ month_hash +' add-link ' + str(temp_day) + ' ' + up_d, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #
+    up_m = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ month_hash +' add-link ' + str(temp_day) + ' ' + up_d, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #
     update=(str(up_m), 'rootDir/'+str(temp_year)+'/'+str(temp_month))   #
     cur.execute(sql, update)
     conn.commit()   #
-    up_y = subprocess.check_output('/usr/local/bin/ipfs object patc#h '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    up_y = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patc#h '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
     update=(str(up_y), 'rootDir/'+str(temp_year))
     cur.execute(sql, update)
     conn.commit()
-    up_r = subprocess.check_output('/usr/local/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    up_r = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
     update=(str(up_r), 'rootDir')
     cur.execute(sql, update)
     conn.commit()
@@ -141,8 +141,9 @@ def dirUpdate2(temp_year, temp_month, temp_day, ipfsAd) :
 def dirUpdate3(temp_year, temp_month, temp_day, ipfsAd) :
     clip_name=ipfsAd.decode().split(' ')[-1].strip()        #Extract clip name
     clip_hash=ipfsAd.decode().split(' ')[-2]                #Extract clip hash
-    sql='INSERT INTO merkleDir (path, hash) VALUES (?, ?)'      #insert query to year, year/month and year/month/day
-    insert_value = ('rootDir/'+str(temp_year), str(emptyDir))   ##year directory is empty directory(newly created)
+    sql='INSERT INTO merkleDir (path, hash) VALUES (?, ?)'      #insert query
+    insert_value = ('rootDir/'+str(temp_year), str(emptyDir))   #year directory is empty directory(newly created)
+    cur.execute(sql, insert_value)
     conn.commit()
     insert_value = ('rootDir/'+str(temp_year)+'/'+str(temp_month), str(emptyDir))   #  year/month directory is empty directory(newly created)
     cur.execute(sql, insert_value)
@@ -165,20 +166,20 @@ def dirUpdate3(temp_year, temp_month, temp_day, ipfsAd) :
     cur.execute(sql, root_path)
     root_hash = str(cur.fetchone()[0])
 
-    up_d = subprocess.check_output('/usr/local/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #
+    up_d = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ day_hash +' add-link ' + clip_name + ' ' + clip_hash, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #
     sql = 'UPDATE merkleDir SET hash=? WHERE path=?'      #
     update=(str(up_d), 'rootDir/'+str(temp_year)+'/'+str(temp_month)+'/'+str(temp_day)) #
     cur.execute(sql, update)
     conn.commit()
-    up_m = subprocess.check_output('/usr/local/bin/ipfs object patch '+ month_hash +' add-link ' + str(temp_day) + ' ' + up_d, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #
+    up_m = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ month_hash +' add-link ' + str(temp_day) + ' ' + up_d, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip() #
     update=(str(up_m), 'rootDir/'+str(temp_year)+'/'+str(temp_month))   #
     cur.execute(sql, update)
     conn.commit()   #업데이트 사항 저장
-    up_y = subprocess.check_output('/usr/local/bin/ipfs object patch '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    up_y = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ year_hash +' add-link ' + str(temp_month) + ' ' + up_m, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
     update=(str(up_y), 'rootDir/'+str(temp_year))
     cur.execute(sql, update)
     conn.commit()
-    up_r = subprocess.check_output('/usr/local/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
+    up_r = subprocess.check_output('/Users/leebongho/work/bin/ipfs object patch '+ root_hash +' add-link ' + str(temp_year) + ' ' + up_y, universal_newlines=True, stderr=subprocess.STDOUT, shell=True).strip()
     update=(str(up_r), 'rootDir')
     cur.execute(sql, update)
     conn.commit()
