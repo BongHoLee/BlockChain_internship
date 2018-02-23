@@ -28,9 +28,9 @@ insertQ = Queue()                                                   #Queue for r
 deployQ = Queue()                                                   #Upload metadata of clip to DB and store it in queue2 to transmit the metadata to smartcontact
 daemonQueue = Queue()                                               #exception handling queue for ipfs daemon
 now = datetime.now()                                                #store now datetime
-uploadQ = Queue()                                                   #
-waitQ1 = Queue()                                                    #안올린거 먼저 upload Q에 다 넣을떄까지 대기
-waitQ2 = Queue()                                                    #안올린거 다 upload Q 에 올리고 새로 생성된거 DB에 삽입할때까지 대기
+uploadQ = Queue()                                                   #to call upload thread from inter_thread
+waitQ1 = Queue()                                                    #wait Queue1 for shared resource access restriction
+waitQ2 = Queue()                                                    #wait Queue2 for shared resource(Database table) access restriction
 
 
 
@@ -49,7 +49,7 @@ def daemon() :                      #exception handling when ipfs daemon termina
         daemon()
 
 """openRTSP 카메라 구동 스레드"""
-def Camera2(i) :
+def Camera2(i) :                                        #IP camera play thread (start openRTSP)
     os.chdir(Camerapath)
     i+=1
     temp = datetime.now()
@@ -60,7 +60,7 @@ def Camera2(i) :
         print("error")
         Camera2(i)
 
-def Camera3(i) :
+def Camera3(i) :                                        #IP camrea play thread (start openRTSP)
     os.chdir(Camerapath)
     i+=1
     temp = datetime.now()
@@ -71,7 +71,7 @@ def Camera3(i) :
         print("error")
         Camera3(i)
 
-def Camera(i) :
+def Camera(i) :                                         #IP camera play thread (start openRTSP)
     os.chdir(Camerapath)    #Set working directory to Camera_ directory (to store video clip)
     i+=1                   #variable to set restart count about openRTSP
     temp = datetime.now()
@@ -84,58 +84,58 @@ def Camera(i) :
 
 """데이터베이스에 Insert 하기위한 스레드"""
 def insert_db() :
-    wait = waitQ1.get()                             #inter_thread가 status=0인 clip들을 uploadQ에 다 넣을떄까지 대기
+    wait = waitQ1.get()                             #wait until  inter_thread put all Datas that have status=0  to uploadQ(Database Concurrent reference restrict)
     while True :
-        name = insertQ.get()                                #새로 생성된 clip들의 이름을 가져와서 insert
+        name = insertQ.get()                                #start insert to DB table newly created clip
         print('basic insert start')
         ctime = os.path.getctime(Camerapath + name)     #To insert create date of clip
         dt = datetime.fromtimestamp(ctime)                  #To insert create date of clip
         g = geocoder.ip('me')                               #To insert location of clip
-        date = str(dt)
-        loca = str(g.latlng)
-        status_flag = 0
-        query = 'INSERT INTO Meta_Data(_name, _date, _loca, status) VALUES(?, ?, ?, ?)'
+        date = str(dt)                                      #transform to string type
+        loca = str(g.latlng)                                #transform to string type
+        status_flag = 0                                     #set to status (stats=0 means clip was just creation, status=1 means clip was encrypted and deployed to smart contract(blockchain))
+        query = 'INSERT INTO Meta_Data(_name, _date, _loca, status) VALUES(?, ?, ?, ?)'         #newly created clip insert some column to Meta_Data table except ipfs_hash, Enc_AES, MRD_id(Foreign key)
         cur.execute(query, (name, date, loca, status_flag))
         conn.commit()
-        waitQ2.put(1)                                       #새로 생성된 clip들을 db에 insert하고 대기큐2 활성화
+        waitQ2.put(1)                                       #wait2 Queue unlock to newly created data put to upload_Thread(via inter_thread)
 
-def inter_thread() :
-    temp = ""                                                   #To store latest name
-    sql = 'SELECT _name FROM Meta_Data WHERE status=0'
+def inter_thread() :                                            #inter_thread (interface of Meta_Data Table and upload_thread)
+    temp = ""                                                   #To store latest _name of metadata with status == 0
+    sql = 'SELECT _name FROM Meta_Data WHERE status=0'          #SELECT all of _name of metadata with status == 0
     cur.execute(sql)
     rows = cur.fetchall()
-    for row in rows :                                           #all of not uploaded clip put upload queue
-        clip_name = row[0]
-        uploadQ.put(clip_name)
-        temp = clip_name
-    waitQ1.put(1)                                        # 이전에 생성되고 처리가 안된 status=0인 애들을 먼저 uploadQ에 다 넣어주고 대기Queue를 풀어줌
+    for row in rows :                                           #store to row one by one (_name of metadata with status == 0)
+        clip_name = row[0]                                      #store clip_name
+        uploadQ.put(clip_name)                                  #put clip_name to uploadQ for upload work(ipfs add, update merkle directory, deploy to smart contract)
+        temp = clip_name                                        #latest clip_name that putted in uploadQ
+    waitQ1.put(1)                                        # waitQ1 Queue unlock to make insert_db thread to work
     while True :
-        wait = waitQ2.get()                             #새로 생성된 clip들이 db에 insert 될때까지 대기
-        sql = 'SELECT _name FROM Meta_Data ORDER BY _id DESC LIMIT 1;'
+        wait = waitQ2.get()                             #wati for insert_db thread work done
+        sql = 'SELECT _name FROM Meta_Data ORDER BY _id DESC LIMIT 1;'      #select newly inserted metadata
         cur.execute(sql)
-        fetch_name = cur.fetchone()                             #실행 결과(테이블 마지막에 저장된 clip 명)가 튜플형태로 저장됨
-        name = fetch_name[0]
-        if temp == name :                                    #아직 테이블에 데이터가 추가되지 않았을 때
+        fetch_name = cur.fetchone()                             #select query result
+        name = fetch_name[0]                                    #convert to string type(name = newly inserted metadata)
+        if temp == name :                                    #if newly metadata not inserted, call continue
             continue
-        else :                                                  #테이블에 최신값이 추가되었을때
-            uploadQ.put(name)                                   #t새로 생성된 clip을 update 위해서 uploadQ에 삽입
-            temp = name
+        else :                                                  #if newly metadata inserted, put to uploadQ
+            uploadQ.put(name)                                   #put to uploadQ
+            temp = name                                         #temp keep up to date _name of metadata
             continue
 
-def update_db(clip_name, ipfsAdd, enc_key) :
+def update_db(clip_name, ipfsAdd, enc_key) :                    #update_db method : get status==0 metadata name, ipfs_hash, Enc_AES, update Database, and update status == 1
     print('DB update start')
-    sql = 'UPDATE Meta_Data SET ipfs_hash=?, Enc_AES=?, status=?, MDR_id=? WHERE _name=?'
+    sql = 'UPDATE Meta_Data SET ipfs_hash=?, Enc_AES=?, status=?, MDR_id=? WHERE _name=?'       #update query about metadata's ipfs_hash, Enc_Aes, status, MDR_id column
     status_flag = 1
     merkle_root = 1
-    clip_hash=ipfsAdd.decode().split(' ')[-2]
+    clip_hash=ipfsAdd.decode().split(' ')[-2]                                                   #make ipfs_hash of clip
     upDB = (clip_hash, str(enc_key), status_flag, merkle_root, clip_name)
     cur.execute(sql, upDB)
-    conn.commit()
-    sql = 'SELECT * FROM Meta_Data WHERE _name=?'
+    conn.commit()                                                                               #DB update is done
+    sql = 'SELECT * FROM Meta_Data WHERE _name=?'                                               #select updated metadata tuple
     selDB = (clip_name,)
     cur.execute(sql, selDB)
     inqueue = cur.fetchone()
-    deployQ.put(str(inqueue))
+    deployQ.put(str(inqueue))                                                                   #put to deploy thread for deploy to smart contract
 
 class LogHandler(PatternMatchingEventHandler) :        #Class of monitoring module(watchdog)
     def __init__(self) :                                #Call constructor
@@ -161,124 +161,127 @@ def upload_thread(temp_year, temp_month, temp_day) :
 
     while True:                                 #loop
         now = datetime.now()                    #이후 카메라별 IPFS 디렉토리를 갱신할 때에 월/별 구분하기 위해 현재날짜 객체를 생성
-        check = uploadQ.queue[0]                  #queue에 삽입된 영상 파일의 이름을 저장하는 변수(암호화가 아직 안됨)
-        temp = os.path.getsize(Camerapath + check)  #파일의 size를 이용해서 영상이 다 받아졌는지 확인하기 위한 size 체크
-        time.sleep(5)                               #파일의 size가 5초가 지나도 그대로이면 파일이 다 받아진것으로 판단하고 업로드 작업 수행
-        checkSize = Camerapath + check
-        if os.path.getsize(checkSize) == temp :
-            toAdd = uploadQ.get()     #queue에 삽입된 영상 파일을 get으로 가져온다 그리고 그 파일의 이름은 toAdd에 저장.
+        check = uploadQ.queue[0]                  #get the value stored in uploadQ (not queue.get(), not pop from queue)
+        temp = os.path.getsize(Camerapath + check)  #store current size of clip to check if streaming is complete
+        time.sleep(5)                               #wait for 5 seconds
+        checkSize = Camerapath + check              #store size of clip after 5 seconds
+        if os.path.getsize(checkSize) == temp :     #compare sizes changes between 5 seconds (if not eqaul, streaming is not complete)
+            toAdd = uploadQ.get()     #get complete(streaming) clip from uploadQ.
             print(toAdd)
-            AES_key = EncDec.Random.new().read(32)     #영상 파일 암호화를 위해 AES_key를 생성함
-            enc_key = EncDec.rsa_enc(AES_key)          #AES_key를 public_key를 이용해서 암호화
-            dec_key = EncDec.rsa_dec(enc_key)          #이건 솔직히 필요 없음. 이후 복호화 하기 위함 (private_key로 복호화)
-            in_filename = Camerapath + toAdd.strip()   #암호화 할 영상 파일의 위치 및 파일명(즉 Camera_/영상파일)
-            os.chdir(encDir)                           #암호화된 영상 파일이 저장될 위치, 즉 encCamera_에 저장
-            EncDec.encrypt_file(AES_key, in_filename, out_filename=toAdd.strip())   #AES_key를 이용해서 영상 파일을 암호화
+            AES_key = EncDec.Random.new().read(32)     #create AES_KEY to encryption(clip encryption)
+            enc_key = EncDec.rsa_enc(AES_key)          #encrypt AES_KEY using public_key (enc_key == encrypted AES_KEY : Enc_AES)
+            dec_key = EncDec.rsa_dec(enc_key)          #to decrypt afterwards, (dec_key == AES_KEY)
+            in_filename = Camerapath + toAdd.strip()   #store the name of the clip to be encrypted(즉 Camera_/영상파일)
+            os.chdir(encDir)                           #work directory is encCamera_(ecrypted clip will be created in this directory)
+            EncDec.encrypt_file(AES_key, in_filename, out_filename=toAdd.strip())   #encrypt the clip using AES_KEY
             print('enc!!!!')
-            time.sleep(2)                               #2초간 정지 후 암호화된 영상 파일을 ipfs add
-            try :
+            print('srtat IPFS Add')
+            time.sleep(2)                               #wait for 2 seconds
+            try :                                       #ipfs add about encrypted clip
                 ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
             except :
-                daemonQueue.put(1)
+                daemonQueue.put(1)                      #if ipfs daemon was terminated, restart
                 time.sleep(30)
                 ipfsAdd=subprocess.check_output('/usr/local/bin/ipfs add ' + encDir + toAdd.strip(), stderr=subprocess.STDOUT, shell=True)
-            clip_name=ipfsAdd.decode().split(' ')[-1].strip()
+            clip_name=ipfsAdd.decode().split(' ')[-1].strip()                   #store encrypted clip_name(eqaul to original name of clip)
             time.sleep(30)
+            print('IPFS Add Done. updating Merkle Directory')                   #ipfs add done, start merkle directroy update
 
-            ctime = os.path.getctime(Camerapath + clip_name)    #영상 클립 생성 시간으로 머클디렉토리 작업할거
-            temp = str(datetime.fromtimestamp(ctime))
-            temp1 = temp.split(' ')[0].replace("-", "/")
-            day_dir = temp1.split('/')[2]
-            month_dir = temp1.split('/')[1]
-            year_dir = temp1.split('/')[0]
+            ctime = os.path.getctime(Camerapath + clip_name)    #to store creation time of the clip
+            temp = str(datetime.fromtimestamp(ctime))           #convert to string
+            temp1 = temp.split(' ')[0].replace("-", "/")        #convert to year/month/day
+            day_dir = temp1.split('/')[2]                       #day_dir store day
+            month_dir = temp1.split('/')[1]                     #month_dir store month
+            year_dir = temp1.split('/')[0]                      #year_dir store year
 
-            day_path = 'rootDir'+'/'+year_dir+'/'+month_dir+'/'+day_dir
-            month_path = 'rootDir'+'/'+year_dir+'/'+month_dir
-            year_path = 'rootDir'+'/'+year_dir
-            sql = 'SELECT EXISTS (SELECT * FROM merkleDir WHERE path=?)'
+            day_path = 'rootDir'+'/'+year_dir+'/'+month_dir+'/'+day_dir     #day_path is rootDir/year/month/day
+            month_path = 'rootDir'+'/'+year_dir+'/'+month_dir               #month_path is rootDir/year/month
+            year_path = 'rootDir'+'/'+year_dir                              #year_path is rootDir/year
+            sql = 'SELECT EXISTS (SELECT * FROM merkleDir WHERE path=?)'    #make sure it already exists. if exists, return 1 nor return 0
             day = (day_path,)
             month = (month_path,)
             year = (year_path,)
             cur.execute(sql,day)
-            check_day = cur.fetchone()[0]
+            check_day = cur.fetchone()[0]                                   #Verify that the day directory exists that matches the date in the file(true: 1, false : 0)
             cur.execute(sql,month)
-            check_month = cur.fetchone()[0]
+            check_month = cur.fetchone()[0]                                 #Verify that the month directory exists that matches the date in the file(true: 1, false : 0)
             cur.execute(sql,year)
-            check_year = cur.fetchone()[0]
+            check_year = cur.fetchone()[0]                                  #Verify that the year directory exists that matches the date in the file(true: 1, false : 0)
 
-            if check_year == 1 :      #암호화된 영상 파일을 IPFS 디렉토리에 저장 후 갱신하기 위한 조건문 시작, 년도/월/일 구분
-                if check_month == 1 :    #년도와 월이 변화가 없다면
-                    if check_day == 1 :    #년도와 월과 일이 변화가 없다면 dirUpdate1 함수 실행
+            if check_year == 1 :      #if year directory already exists in merkleDir table, check month directory
+                if check_month == 1 :    #if month directory already exists in merkleDir tble, check day directory
+                    if check_day == 1 :    #if year/month/day directory already exists in merkleDir table, call updateDir.dirUpdate1 function
                         root_hash = updateDir.dirUpdate1(year_dir, month_dir, day_dir, ipfsAdd)
-                    elif check_day == 0 :  #년도와 월은 변화가 없지만 일이 변했다면
+                    elif check_day == 0 :  #if year/month directory already exsits but year/month/day directory is not exsits in merkleDir table, call updateDir.dirUpdate1_1 function
                         root_hash = updateDir.dirUpdate1_1(year_dir, month_dir, day_dir, ipfsAdd)
-                elif check_month == 0 :  #년도는 같지만 월이 다르다면
-                    root_hash = updateDir.dirUpdate2(year_dir, month_dir, day_dir, ipfsAdd)  #년도는 같지만 월이 다른경우 dirUpdate2 실행시켜줌, 월이 다르다면 당연히 일도 다름
-            elif check_year == 0 : #년도가 바뀌었을 때에는 1월 1일이니까 month=1, day=1로 변화
+                elif check_month == 0 :  #if year directory already exsits but year/month directory and year/month/day directory are not eixsts in merkleDir table, call updateDir.dirUpdate2 function
+                    root_hash = updateDir.dirUpdate2(year_dir, month_dir, day_dir, ipfsAdd)  #
+            elif check_year == 0 : #if year directory, year/month directory and year/month/day directory are not exsits in merkleDir table, call updateDir.dirUpdate3 function
                 root_hash = updateDir.dirUpdate3(year_dir, month_dir, day_dir, ipfsAdd)
-            update_db(clip_name, ipfsAdd, enc_key)                 #ipfs의 hash와 암호화된 AES_key를 인자로 넘겨서 DB thread 함수 호출
-            uploadQ.task_done()                           #queue작업이 수행되었음을 알림.
+            print('Update merkle Direcotry Done. start deploying to Smart contract')            #merkleDir update is done
+            update_db(clip_name, ipfsAdd, enc_key)                 #pass the arguments to update_db method to update Meta_Data table(about ipfs_hash, Enc_AES, status, MDR_id)
+            uploadQ.task_done()                           #uploadQ was done
             print('DB update task done')
-            os.remove(Camerapath + toAdd)              #업로드 수행 이후 영상 파일 제거
-            os.remove(encDir + toAdd)                  #업로드 수행 이후 암호화된 영상 파일 제거
+            os.remove(Camerapath + toAdd)              #if update Database, remove updated clip from Camera_ directroy
+            os.remove(encDir + toAdd)                  #if update Database, remove updated clip from encCamera_ directory
 
 
 """"""
-def deploy() :              #스마트컨트랙트에 메타데이터를 저장하기 위한 스레드
+def deploy() :              #deploy thread to deploy metadata from Meta_Data table to smart contract
     while True :
         i = 0
-        setData = deployQ.get()      #queue2에 저장된 데이터(데이터베이스에서 추출한 마지막 열의 메타데이터)를 setData에 저장
-        tx_receipt = w3.eth.getTransactionReceipt('0xd501b20ee29b361f7babde65bbc78a13b583e8936a09aa235cde71289c39ebdb') #스마트 컨트랙트의 주소를 추출하기 위해 트랜잭션의 주소를 가져옴
-        contract_address = tx_receipt['contractAddress']
-        contract_instance = contract(contract_address)#컨트랙트 주소를 이용해서 컨트랙트 인스턴스 생성
+        setData = deployQ.get()      #get metadata from deployQ(inserted by update_db)
+        print('deploy thread start!')
+        tx_receipt = w3.eth.getTransactionReceipt('0xd501b20ee29b361f7babde65bbc78a13b583e8936a09aa235cde71289c39ebdb') #trasaction address for smart contract address
+        contract_address = tx_receipt['contractAddress']                #call smart contract address
+        contract_instance = contract(contract_address)#create contract_instance using smartcontact address
         # Set
-        tx = contract_instance.transact({"from": w3.eth.accounts[0],"gas": 500000}).insertData(str(setData))#스마트컨트랙트에 setData를 저장함. 저장하는 주체는 account[0]이고 가스는 500000으로 설정
-        print('smart contract value inserted value : {} '.format(setData))
+        tx = contract_instance.transact({"from": w3.eth.accounts[0],"gas": 500000}).insertData(str(setData))#deploy metadata(setData) to smartcontract using accounts (eth.accounts[0]) and gas limit 500000
         time.sleep(2)
-        #while w3.eth.getTransactionReceipt(tx) is None :            #트랜잭션이 채굴될 때 까지 대기
+        #while w3.eth.getTransactionReceipt(tx) is None :            #wait for mining
         #    time.sleep(3)
-        while True :
+        while True :                                                #wait for mining
             try :
                 tx_hash = w3.eth.getTransactionReceipt(tx)
                 print('transaction submitting')
                 break
             except :
                 continue
-        while w3.eth.getTransactionReceipt(tx) is None :
+        while w3.eth.getTransactionReceipt(tx) is None :            #if mining done, break from while
             time.sleep(3)
 
-        temp = contract_instance.call().getIndex()                  #컨트랙트내의 배열 인덱스를 가져옴, 이 인덱스를 가지고 컨트랙트 배열에 저장된 메타데이터를 추출
+        temp = contract_instance.call().getIndex()                  #get smart index of smart contract's metadata array
         print('last index : {} '.format(temp))
-        print('inserted value get : {} '.format(contract_instance.call().getData(temp)))
+        print('inserted value get from smart contract : {} '.format(contract_instance.call().getData(temp)))    #print metadata from smart contract for check
         deployQ.task_done()
         print('deploy task done')
 
 
 if __name__ == '__main__' :
-    insert_thread = threading.Thread(target=insert_db)
-    interface_thread = threading.Thread(target=inter_thread)
-    #Camera_thread = threading.Thread(target=Camera, args=(0,))
+    insert_thread = threading.Thread(target=insert_db)          #define insert_db thread
+    interface_thread = threading.Thread(target=inter_thread)    #define inter_thread thread
+    #Camera_thread = threading.Thread(target=Camera, args=(0,)) #define Camera thread
     #Camera_thread.daemon = True
-    #Camera2_thread = threading.Thread(target=Camera2, args=(0,))
+    #Camera2_thread = threading.Thread(target=Camera2, args=(0,))   #define Camera2 thread
     #Camera2_thread.daemon = True
-    #Camera3_thread = threading.Thread(target=Camera3, args=(0,))
+    #Camera3_thread = threading.Thread(target=Camera3, args=(0,))   #define Camera3 thread
     #Camera3_thread.daemon = True
-    deplpy_thread = threading.Thread(target = deploy)
-    event_handler = LogHandler()
-    observer = Observer()
-    observer.schedule(event_handler, path=Camerapath, recursive=True)
-    observer.start()
-    insert_thread.start()
-    interface_thread.start()
-    #Camera_thread.start()
-    #Camera2_thread.start()
-    #Camera3_thread.start()
+    deplpy_thread = threading.Thread(target = deploy)               #define deploy thread
+    event_handler = LogHandler()                                    #define monitoring thread
+    observer = Observer()                                           #define monitoring thread
+    observer.schedule(event_handler, path=Camerapath, recursive=True)   #define monitoring thread
+    observer.start()                                                #monitoring thread start
+    insert_thread.start()                                           #insert_db thread start
+    interface_thread.start()                                        #inter_thread thread start
+    #Camera_thread.start()                                          #Camera thread start
+    #Camera2_thread.start()                                         #Camera2 thread start
+    #Camera3_thread.start()                                         #Camera3 thread start
     time.sleep(3)
-    upload = threading.Thread(target = upload_thread, args=(now.year, now.month, now.day))
-    upload.start()
-    deplpy_thread.start()
-    daemon_thread = threading.Thread(target=daemon)
-    daemon_thread.start()
+    upload = threading.Thread(target = upload_thread, args=(now.year, now.month, now.day))  #define upload_thread thread
+    upload.start()                                                  #upload_thread start
+    deplpy_thread.start()                                           #deploy thread start
+    daemon_thread = threading.Thread(target=daemon)                 #define daemon thread
+    daemon_thread.start()                                           #daemon_thread start
 
 
     try :

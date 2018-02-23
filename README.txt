@@ -1,6 +1,20 @@
+
+#########################
+주석은 모두 영어로 기재했습니다. (부족한 영어로 구글번역의 도움을 받아서 최대한 열심히 작성했지만 조잡합니다 ㅠㅠ)
+그리고 문서는 한글로 기재했습니다.
+시행착오 및 설명들을 최대한 세밀하게 기재했습니다.
+#########################
+
+
+
+
 -	Camera_ : 영상 clip들이 저장되는 디렉토리입니다. 필요에 따라 위치를 외부 디렉토리로 바꿀 수 있습니다.
 -	encCamera_ : Camera_ 내의 clip들이 암호화 되어 저장되는 위치입니다. 마찬가지로 필요에 따라 위치를 외부 디렉토리로 변경 가능합니다.
 -	otherSc : 당장 프로그램을 실행하는데에 관련이 없는 script들을 저장했습니다. Dec.py의 경우 암호화되어 저장된 clip들을 복호화 하는 test를 수행하였고 ipfsdec.py 역시 마찬가지 입니다. 이후에 복호화 하는데에 혹시라도 필요할까봐 따로 저장해두었습니다.
+      -deploy.py : smart contract를 블록체인에 deploy하는 코드입니다. 사실 smart contract의 deploy 테스트는 web 컴파일러를 사용하기를 추천드립니다.
+                   해당 스크립트를 실행시키시면 transcation address, abi가 출력되게끔 만들었습니다. main.py 및 mysql.py에 복사/붙여넣기 하셔서 그대로 사용하시면 될 것 같습니다.
+      -metaData.sol : 현재 smart contract 코드입니다.
+
 -	keyDir : 암호화에 필요한 private key, publice key가 텍스트 형식으로 저장되어있습니다. Aes key의 경우 영상 clip 하나당 생성되는데다 private key로 enc_AES key를 복호화 가능하기 때문에 따로 저장하지 않습니다.
 -	그 외의 EncDec.py 부터 updateDir.py까지는 프로그램을 실행하기 위한 스크립트입니다.
 

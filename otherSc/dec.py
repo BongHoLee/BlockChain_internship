@@ -86,17 +86,4 @@ def main():
     dec_key=rsa_dec(key)
     decrypt_file(dec_key, in_filename='ttt', out_filename='ttt1')
 
-
-
-
-
-"""
-    enc_ase_key = eval(AES_key)      # ***** important!!!!!! tuple -> encrypted AES_KEY
-    print(enc_ase_key)
-    dec_ase_key = rsa_dec(enc_ase_key)            #decrypted AES_KEY
-    #print(dec_ase_key)
-    #decrypt_file(dec_ase_key, in_filename='ttt', out_filename='ttt.mov')
-    #outfile = open('original.mov')
-"""
-
 main()

@@ -8,27 +8,27 @@ from Crypto.Cipher import AES
 
 
 
-PrivateKeyPath = '/Users/leebongho/monitoring/keyDir/mykey.txt'
-PublicKeyPath = '/Users/leebongho/monitoring/keyDir/mypukey.txt'
+PrivateKeyPath = '/Users/leebongho/monitoring/keyDir/mykey.txt'                     #private key path
+PublicKeyPath = '/Users/leebongho/monitoring/keyDir/mypukey.txt'                    #public key path
 """RSA KEY def"""
 
-def readprivatePEM() :
+def readprivatePEM() :              #function to read private_key
     h = open(PrivateKeyPath, 'r')
     key = RSA.importKey(h.read())   #read private_key from mykey.txt
     h.close()
-    return key
+    return key                      #return private_key
 
-def readpublicPEM() :
+def readpublicPEM() :               #funtion to read public_key
     f = open(PublicKeyPath, 'r')
     key = RSA.importKey(f.read())   #read public_key from mypub.key.txt
     f.close()
-    return key
+    return key                      #return public_key
 
 def rsa_enc(msg) :  # encryption msg(AES_key) using public_key
-    private_key = readprivatePEM()          #private_key를 읽어와서 저장
-    public_key = private_key.publickey()    #해당 priavte_key를 이용해서 public_key를 가져옴
-    encdata = public_key.encrypt(msg, 32)   #public_key를 이용해서 msg를 encryption
-    return encdata
+    private_key = readprivatePEM()          #store private key using function
+    public_key = private_key.publickey()    #create public_key using private_key
+    encdata = public_key.encrypt(msg, 32)   #encrypt msg(AES_KEY) using public_key
+    return encdata                          #return encrypted AES_KEY(Enc_AES)
 
 def rsa_dec(msg) :  # decryption msg(enc_AES_KEY) using private_key
     private_key = readprivatePEM()
@@ -53,21 +53,21 @@ def decrypt_file(key, in_filename, out_filename, chunksize=24 * 1024):
                 outfile.write(decryptor.decrypt(chunk))
             outfile.truncate(origsize)
 
-#AES KEY를 이용해서 영상을 암호화 하기 위함, key는 AES_KEY, in_filename은 영상 이름 삽입
+#To encrypt the clip using AES key, 'key' = AES_KEY, 'in_filename' = clip name.
 def encrypt_file(key, in_filename, out_filename=None, chunksize=65536):
     if not out_filename:
         out_filename = in_filename + '.enc'
-    iv = b'initialvector123'                    #초기화 벡터를 따로 지정해줌, 이후 복호화 할 때에도 무조건 필요
-    encryptor = AES.new(key, AES.MODE_CBC, iv)  #AES key와 초기화벡터(iv)를 이용해서 CBC모드로 암호화 하기 위한 객체
-    filesize = os.path.getsize(in_filename)     #암호화 하려는 영상 파일의 크기를 가져옴
-    with open(in_filename, 'rb') as infile:     #영상 파일의 내용을 infile이라는 이름으로 저장
-        with open(out_filename, 'wb') as outfile:   #원본 영상 파일을 암호화파일로 만들기 위함
-            outfile.write(struct.pack('<Q', filesize))  #struct.pack은 형변환. 즉 원본파일의 사이즈 만큼 형변환해서 암호화
-            outfile.write(iv)                           #초기화 벡터를 같이 넣어준다.
+    iv = b'initialvector123'                    #Specify the initialization vector separately. This initialization vector is also necessary for decoding later.
+    encryptor = AES.new(key, AES.MODE_CBC, iv)  #An object to encrypt in CBC mode using AES key and initialization vector (iv).
+    filesize = os.path.getsize(in_filename)     #Get the size of the clip to be encrypted.
+    with open(in_filename, 'rb') as infile:     #Save the contents of the clip as infile
+        with open(out_filename, 'wb') as outfile:   #To make the original clip file into an encrypted file.
+            outfile.write(struct.pack('<Q', filesize))  #Casting. That is, the encryption is performed according to the size of the original file.
+            outfile.write(iv)                           #Put initialization vector together.
             while True:
-                chunk = infile.read(chunksize)          #원본파일을 chunksize만큼 읽어서 chunk변수에 저장
-                if len(chunk) == 0:                     #chunk 사이즈가 0이라면 (읽어온 내용이 없다면) 암호화 종료
+                chunk = infile.read(chunksize)          #Read the original file by chunksize and store it in the chunk variable.
+                if len(chunk) == 0:                     #if the size of the chunk is 0 (if it is not read), the encryption ends.
                     break
-                elif len(chunk) % 16 != 0:                  #읽어온 사이즈가 16바이트로 나누어 떨어지지 않는다면 나누어 떨어질만큼 공백을 삽입
+                elif len(chunk) % 16 != 0:                  #if the size you read is not divided by 16 bytes, insert a space to divide it.
                     chunk += b' ' * (16 - len(chunk) % 16)
-                outfile.write(encryptor.encrypt(chunk))     #chunk크기만큼 AES_key로 암호화 
+                outfile.write(encryptor.encrypt(chunk))     #Encrypted with chunk size AES_key. 
